@@ -5,6 +5,7 @@ AplicaciÃ³n web para venta de entradas utilizada en la cursada 2025 de IngenierÃ
 # Integrantes
 
 - Jose Francisco Arce
+- Joaquin Botteri
 
 ## Dependencias
 
