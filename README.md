@@ -6,6 +6,7 @@ Aplicaci√≥n web para venta de entradas utilizada en la cursada 2025 de Ingenier√
 
 - Jose Francisco Arce
 - Joaquin Botteri
+- Oriana Intendente Monaldi
 
 ## Dependencias
 
