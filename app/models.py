@@ -73,3 +73,36 @@ class Event(models.Model):
         self.organizer = organizer or self.organizer
 
         self.save()
+
+class Ticket(models.Model):
+    TICKET_TYPES = [
+        ("GENERAL", "GENERAL"),
+        ("VIP", "VIP"),
+    ]
+    buy_date = models.DateField()
+    ticket_code = models.CharField(max_length=100, unique=True)
+    quantity = models.IntegerField()
+    type = models.CharField(max_length=10, choices=TICKET_TYPES)
+
+    def __str__(self):
+        return self.ticket_code
+    
+    @classmethod
+    def validate(cls, quantity, type):
+        errors = {}
+
+        if quantity == "":
+            errors["quantity"] = "Por favor ingrese la cantidad de entradas"
+        else:
+            try:
+                quantity = int(quantity)
+                if quantity <= 0:
+                    errors["quantity"] = "La cantidad de entradas debe ser mayor a 0"
+            except ValueError:
+                errors["quantity"] = "La cantidad de entradas debe ser un número válido"
+
+        if type == "":
+            errors["type"] = "Por favor ingrese el tipo de entrada"
+
+        return errors
+        
