@@ -105,4 +105,20 @@ class Ticket(models.Model):
             errors["type"] = "Por favor ingrese el tipo de entrada"
 
         return errors
-        
+    
+    @classmethod
+    def new(cls, buy_date, ticket_code, quantity, type):
+        errors = Ticket.validate(quantity, type)
+
+        if len(errors.keys()) > 0:
+            return False, errors
+
+        Ticket.objects.create(
+            buy_date=buy_date,
+            ticket_code=ticket_code,
+            quantity=quantity,
+            type=type,
+        )
+
+        return True, None
+
