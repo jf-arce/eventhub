@@ -122,3 +122,10 @@ class Ticket(models.Model):
 
         return True, None
 
+    def update(self, buy_date, ticket_code, quantity, type):
+        self.buy_date = buy_date or self.buy_date
+        self.ticket_code = ticket_code or self.ticket_code
+        self.quantity = quantity or self.quantity
+        self.type = type or self.type
+
+        self.save()
