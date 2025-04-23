@@ -111,3 +111,9 @@ class Comment(models.Model):
         )
 
         return True, None
+    
+    def update(self, title, text):
+        self.title = title or self.title
+        self.text = text or self.text
+        
+        self.save()
