@@ -95,3 +95,19 @@ class Comment(models.Model):
             errors["text"] = "Por favor ingrese un comentario"
 
         return errors
+    
+    @classmethod
+    def new(cls, title, text, user, event):
+        error = cls.validate(title, text)
+        
+        if len(error.keys()) > 0:
+            return False, error
+        
+        cls.objects.create(
+            title=title,
+            text=text,
+            user=user,
+            event=event
+        )
+
+        return True, None
