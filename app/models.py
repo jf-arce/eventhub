@@ -110,3 +110,10 @@ class Category (models.Model):
         )
 
         return True, None
+    
+    def update(self, name, description, event):
+        self.name = name or self.name
+        self.description = description or self.description
+        self.event = event or self.event
+
+        self.save()
