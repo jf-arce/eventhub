@@ -95,3 +95,18 @@ class Category (models.Model):
             errors["description"] = "Por favor ingrese una descripcion"
 
         return errors
+    
+    @classmethod
+    def new(cls, name, description, event):
+        errors = cls.validate(name, description)
+
+        if len(errors.keys()) > 0:
+            return False, errors
+
+        cls.objects.create(
+            name=name,
+            description=description,
+            event=event,
+        )
+
+        return True, None
