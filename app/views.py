@@ -139,7 +139,7 @@ def comments(request):
     comments = Comment.objects.all().order_by("created_at")
     return render(
         request,
-        "app/comments.html",
+        "app/comments/comments.html",
         {
             "comments": comments, 
         },
@@ -157,3 +157,33 @@ def comment_delete(request, id):
         return redirect("comments")
 
     return redirect("comments")
+
+@login_required
+def add_comment(request, event_id):
+    user= request.user
+    
+    if request.method == "POST":
+        title = request.POST.get("title")
+        text = request.POST.get("text")
+        event = get_object_or_404(Event, pk=event_id)
+        
+        print(title, text, event)
+        
+        success, errors = Comment.new(title, text, user, event)
+
+        if not success:
+            return render(
+                request,
+                "app/event_detail.html",
+                {
+                    "event": event,
+                    "comments": Comment.objects.all().filter(event=event).order_by("created_at"),
+                    "errors": errors,
+                    "form_data": {"title": title, "text": text},
+                },
+            )
+        
+        return redirect("event_detail", event_id) 
+    
+    return redirect("event_detail", event_id)
+
