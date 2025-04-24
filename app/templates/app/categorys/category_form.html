@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h1 class="mb-4">
+                {% if category.id %}
+                    Editar categoria
+                {% else %}
+                    Crear categoria
+                {% endif %}
+            </h1>
+
+            <div class="card">
+                <div class="card-body">
+                    <form action="{% url 'category_form' %}" method="POST">
+                        {% csrf_token %}
+                        <div class="vstack gap-3">
+                            <div>
+                                <label for="title" class="form-label">Nombre de la categoria</label>
+                                <input class="form-control"
+                                    id="name"
+                                    required=""
+                                    type="text"
+                                    value="{{ category.name }}"
+                                    name="name" />
+                            </div>
+                            <div>
+                                <label for="description" class="form-label">Descripción</label>
+                                <textarea
+                                    class="form-control"
+                                    id="description"
+                                    name="description"
+                                    rows="4"
+                                    required="">{{ category.description }}</textarea>
+                            </div>
+                            
+                            <div>
+                                <button type="submit" class="btn btn-primary">Crear categoria</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
