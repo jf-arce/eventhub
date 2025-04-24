@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-
+from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class User(AbstractUser):
     is_organizer = models.BooleanField(default=False)
@@ -73,3 +74,19 @@ class Event(models.Model):
         self.organizer = organizer or self.organizer
 
         self.save()
+
+
+
+class Rating(models.Model):
+    event = models.ForeignKey("Event", on_delete=models.CASCADE, related_name="ratings")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ratings")
+    title = models.CharField(max_length=255)
+    text = models.TextField()
+    rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])  # permite medias estrellas
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('event', 'user')  # evita duplicados
+
+    def __str__(self):
+        return f"{self.user.username} - {self.rating}★"
