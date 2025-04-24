@@ -187,3 +187,18 @@ def add_comment(request, event_id):
     
     return redirect("event_detail", event_id)
 
+@login_required
+def comment_update(request, id):
+    user = request.user
+
+    if request.method == "POST":
+        title = request.POST.get("title")
+        text = request.POST.get("text")
+        comment = get_object_or_404(Comment, pk=id)
+        
+        comment.update(title, text)
+        
+        return redirect("event_detail", comment.event.pk)
+    
+    comment = get_object_or_404(Comment, pk=id)
+    return redirect("event_detail", comment.event.pk)

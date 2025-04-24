@@ -7,19 +7,38 @@
         <div class="card-body">
             {% for comment in comments %}
             <div class="comment-item mb-3 p-3 border rounded">
-                <div
-                    class="d-flex justify-content-between align-items-center mb-2"
-                >
+                <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="d-flex align-items-center">
                         <i class="bi bi-person-circle me-2 text-primary"></i>
                         <div>
                             <strong>{{ comment.user.username }}</strong>
-                            <small 
-                                class="text-muted d-block"
-                            >
-                            {{ comment.created_at|date:"d M Y, H:i" }}
+                            <small class="text-muted d-block">
+                                {{ comment.created_at|date:"d M Y, H:i" }}
                             </small>
                         </div>
+                    </div>
+                    <!-- Icono de tres puntos -->
+                    <div class="dropdown">
+                        <button
+                            class="btn btn-link text-dark p-0"
+                            type="button"
+                            id="dropdownMenu{{ comment.id }}"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                        >
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenu{{ comment.id }}">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'comment_update' comment.id %}">Editar</a>
+                            </li>
+                            <li>
+                                <form method="post" action="{% url 'comment_delete' comment.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-danger">Eliminar</button>
+                                </form>
+                            </li>
+                        </ul>
                     </div>
                 </div>
                 <h5 class="mt-2">{{ comment.title }}</h5>
