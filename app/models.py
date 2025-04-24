@@ -103,3 +103,12 @@ class Rating(models.Model):
             rating=rating
         )
         return True, rating
+    
+    @classmethod
+    def delete_rating(cls, event, user):
+        try:
+            rating = cls.objects.get(event=event, user=user)
+            rating.delete()
+            return True, "Calificación eliminada."
+        except cls.DoesNotExist:
+            return False, "No se encontró la calificación."
