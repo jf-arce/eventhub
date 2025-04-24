@@ -73,3 +73,34 @@ class Event(models.Model):
         self.organizer = organizer or self.organizer
 
         self.save()
+
+class Venue(models.Model):
+    name = models.CharField(max_length=200)
+    address = models.CharField(max_length=200)
+    city = models.CharField(max_length=200)
+    capacity = models.IntegerField()
+    contact = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.name
+    
+    @classmethod
+    def validate(cls, name, address, city, capacity, contact):
+        errors = {}
+
+        if name == "":
+            errors["name"] = "Por favor ingrese un nombre"
+
+        if address == "":
+            errors["address"] = "Por favor ingrese una direccion"
+
+        if city == "":
+            errors["city"] = "Por favor ingrese una ciudad"
+
+        if capacity <= 0:
+            errors["capacity"] = "La capacidad debe ser mayor a 0"
+
+        if contact == "":
+            errors["contact"] = "Por favor ingrese un contacto"
+
+        return errors
