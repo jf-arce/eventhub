@@ -33,7 +33,7 @@ l<div class="container">
                                 <i class="bi bi-eye" aria-hidden="true"></i>
                             </a>
 
-                            <form action="{% url 'comment_delete' comment.event.id %}" method="POST">
+                            <form action="{% url 'comment_delete' comment.id %}" method="POST">
                                 {% csrf_token %}
                                 <button class="btn btn-sm btn-outline-danger"
                                     title="Eliminar"
