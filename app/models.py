@@ -82,7 +82,7 @@ class Rating(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ratings")
     title = models.CharField(max_length=255)
     text = models.TextField()
-    rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])  # permite medias estrellas
+    rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])  
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -90,3 +90,16 @@ class Rating(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.rating}★"
+
+    @classmethod
+    def create_rating(cls, event, user, title, text, rating):
+        if cls.objects.filter(event=event, user=user).exists():
+            return False, "Ya has calificado este evento."
+        rating = cls.objects.create(
+            event=event,
+            user=user,
+            title=title,
+            text=text,
+            rating=rating
+        )
+        return True, rating
