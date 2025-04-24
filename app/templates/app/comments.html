@@ -10,8 +10,9 @@ l<div class="container">
     <table class="table">
         <thead>
             <tr>
-                <th>Título</th>
-                <th>Texto</th>
+                <th>Evento</th>
+                <th>Usuario</th>
+                <th>Comentario</th>
                 <th>Fecha</th>
                 <th>Acciones</th>
             </tr>
@@ -19,7 +20,8 @@ l<div class="container">
         <tbody>
             {% for comment in comments%}
                 <tr>
-                    <td>{{ comment.title }}</td>
+                    <td>{{ comment.event.title }}</td>
+                    <td>{{ comment.user.username }}</td>
                     <td>{{ comment.text }}</td>
                     <td>{{ comment.created_at|date:"d b Y, H:i" }}</td>
                     <td>
