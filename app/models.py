@@ -112,3 +112,15 @@ class Rating(models.Model):
             return True, "Calificación eliminada."
         except cls.DoesNotExist:
             return False, "No se encontró la calificación."
+    
+    @classmethod
+    def update_rating(cls, event, user, title, text, rating):
+        try:
+            rating_instance = cls.objects.get(event=event, user=user)
+            rating_instance.title = title
+            rating_instance.text = text
+            rating_instance.rating = rating
+            rating_instance.save()
+            return True, rating_instance
+        except cls.DoesNotExist:
+            return False, "No se encontró la calificación para actualizar."
