@@ -27,6 +27,47 @@ class User(AbstractUser):
         return errors
 
 
+class Category (models.Model):
+    name = models.CharField(max_length=200)
+    description = models.TextField()
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+   
+    @classmethod
+    def validate(cls, name, description):
+        errors = {}
+
+        if name == "":
+            errors["name"] = "Por favor ingrese un nombre"
+
+        if description == "":
+            errors["description"] = "Por favor ingrese una descripcion"
+
+        return errors
+    
+    @classmethod
+    def new(cls, name, description):
+        errors = cls.validate(name, description)
+
+        if len(errors.keys()) > 0:
+            return False, errors
+
+        cls.objects.create(
+            name=name,
+            description=description,
+        )
+
+        return True, None
+    
+    def update(self, name, description):
+        self.name = name or self.name
+        self.description = description or self.description
+
+        self.save()
+
+
 class Event(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
@@ -34,6 +75,7 @@ class Event(models.Model):
     organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="organized_events")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="category_event")
 
     def __str__(self):
         return self.title
@@ -75,45 +117,3 @@ class Event(models.Model):
         self.save()
 
 
-class Category (models.Model):
-    name = models.CharField(max_length=200)
-    description = models.TextField()
-    is_active = models.BooleanField(default=True)
-    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="event_category")
-
-    def __str__(self):
-        return self.name
-   
-    @classmethod
-    def validate(cls, name, description):
-        errors = {}
-
-        if name == "":
-            errors["name"] = "Por favor ingrese un nombre"
-
-        if description == "":
-            errors["description"] = "Por favor ingrese una descripcion"
-
-        return errors
-    
-    @classmethod
-    def new(cls, name, description, event):
-        errors = cls.validate(name, description)
-
-        if len(errors.keys()) > 0:
-            return False, errors
-
-        cls.objects.create(
-            name=name,
-            description=description,
-            event=event,
-        )
-
-        return True, None
-    
-    def update(self, name, description, event):
-        self.name = name or self.name
-        self.description = description or self.description
-        self.event = event or self.event
-
-        self.save()
