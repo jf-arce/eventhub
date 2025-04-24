@@ -71,7 +71,15 @@ def events(request):
 @login_required
 def event_detail(request, id):
     event = get_object_or_404(Event, pk=id)
-    return render(request, "app/event_detail.html", {"event": event})
+    comments = Comment.objects.all().filter(event=event).order_by("created_at")
+    return render(
+        request, 
+        "app/event_detail.html", 
+        {
+            "event": event,
+            "comments": comments,
+        }
+    )
 
 
 @login_required
