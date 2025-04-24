@@ -75,7 +75,7 @@ class Event(models.Model):
     organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="organized_events")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="category_event")
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="category_event")
 
     def __str__(self):
         return self.title
