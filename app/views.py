@@ -135,4 +135,17 @@ def comments(request):
         {
             "comments": comments, 
         },
-    ) 
+    )
+    
+@login_required
+def comment_delete(request, id):
+    user = request.user
+    if not user.is_organizer:
+        return redirect("comments")
+
+    if request.method == "POST":
+        comment = get_object_or_404(Comment, pk=id)
+        comment.delete()
+        return redirect("comments")
+
+    return redirect("comments")
