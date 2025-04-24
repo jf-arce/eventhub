@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.db.models import Count
 
 from .models import Event, User, Category
 
@@ -128,11 +129,41 @@ def event_form(request, id=None):
 
 @login_required
 def categorys(request):
-    categorys = Category.objects.all().order_by("created_at")
+    categorys = Category.objects.annotate(num_events=Count('category_event'))
+
     return render(
         request,
-        "app/categorys.html",
+        "app/categorys/categorys.html",
         {
             "categorys": categorys,
         },
+    )
+
+@login_required
+def category_form(request, id=None):
+    user = request.user
+
+    if not user.is_organizer:
+        return redirect("categorys")
+
+    if request.method == "POST":
+        name = request.POST.get("name")
+        description = request.POST.get("description")
+
+        if id is None:
+            Category.new(name, description)
+        else:
+            category = get_object_or_404(Category, pk=id)
+            # category.update(name, description)
+
+        return redirect("categorys")
+
+    category = {}
+    if id is not None:
+        category = get_object_or_404(Category, pk=id)
+
+    return render(
+        request,
+        "app/categorys/category_form.html",
+        {"category": category, "user_is_organizer": request.user.is_organizer},
     )
