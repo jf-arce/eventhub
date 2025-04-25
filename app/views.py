@@ -161,3 +161,22 @@ def add_rating(request, event_id):
             else:
                 form.add_error(None, str(result))
     return redirect('event_detail', id=event.id)
+
+@login_required
+def edit_rating(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    user_rating = Rating.objects.filter(event=event, user=request.user).first()
+    form = RatingForm(instance=user_rating)
+    ratings = event.ratings.all()
+    return render(
+        request,
+        'app/event_detail.html',
+        {
+            'event': event,
+            'form': form,
+            'ratings': ratings,
+            'user_rated': True,
+            'editing': True,
+        }
+    )
+    
