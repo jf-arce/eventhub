@@ -4,7 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .models import Event, User
+from .models import Event, User, Rating
+from .forms import RatingForm  # Import RatingForm from the forms module
 
 
 def register(request):
@@ -70,8 +71,24 @@ def events(request):
 
 @login_required
 def event_detail(request, id):
-    event = get_object_or_404(Event, pk=id)
-    return render(request, "app/event_detail.html", {"event": event})
+    event = get_object_or_404(Event, id=id)
+    ratings = event.ratings.all()
+    user_rating = Rating.objects.filter(event=event, user=request.user).first()
+    user_rated = user_rating is not None
+    editing = False
+    form = RatingForm()
+    return render(
+        request,
+        'app/event_detail.html',
+        {
+            'event': event,
+            'form': form,
+            'ratings': ratings,
+            'user_rated': user_rated,
+            'editing': editing,
+        }
+    )
+
 
 
 @login_required
