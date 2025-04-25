@@ -1,21 +1,24 @@
 {% extends 'base.html' %} {% block content %}
 <div class="container my-5">
-    <div class="row">
-        <div class="col-md-8 offset-md-2">
+    <div class="row ">
+        <div class="col-md-8 ">
             <div class="card shadow-sm">
                 <div class="card-header">
                     <h5 class="mb-0">Comprar Entrada</h5>
                 </div>
                 <div class="card-body">
                     <h3 class="card-title">{{ event.title }}</h3>
+                    <p class="card-text">{{ event.date }}</p>
+                    <p class="card-text">{{ venue.name }}</p>
+                    <p class="card-text">{{ venue.contact }}</p>
 
                     <form method="post">
                         {% csrf_token %}
-                        <div class="mb-3">
+                        <div class="m-1">
                             <label for="cantidad" class="form-label"
                                 >Cantidad de entradas</label
                             >
-                            <div class="input-group" style="max-width: 200px">
+                            <div class="input-group" style="max-width: 100%">
                                 <button
                                     type="button"
                                     class="btn btn-outline-secondary"
@@ -39,12 +42,9 @@
                                     +
                                 </button>
                             </div>
-                            <p class="text-muted">
-                                Disponibles: <strong>{{ event.available_tickets }}</strong> entradas
-                            </p>
                         </div>
-
-                        <div class="mb-3">
+                    </div>
+                        <div class="m-3 mt-1">
                             <label for="tipoEntrada" class="form-label"
                                 >Tipo de entrada</label
                             >
@@ -58,9 +58,9 @@
                             </select>
                         </div>
 
-                        <h5 class="mt-4">Método de pago</h5>
+                        <h5 class="m-3">Método de pago</h5>
 
-                        <div class="card p-3 bg-light mb-3">
+                        <div class="card p-3 bg-light mt-1 m-3 ">
                             <div class="mb-3">
                                 <label for="numeroTarjeta" class="form-label"
                                     >Número de tarjeta</label
@@ -92,7 +92,7 @@
                                         >CVV</label
                                     >
                                     <input
-                                        type="number"
+                                        type="text"
                                         class="form-control"
                                         id="cvv"
                                         placeholder="123"
@@ -112,25 +112,29 @@
                                 />
                             </div>
                         </div>
-
-                        <div class="form-check mb-4">
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                value=""
-                                id="terminos"
-                                required
-                            />
-                            <label class="form-check-label" for="terminos">
-                                Acepto los
-                                <a href="#">términos y condiciones</a> y la
-                                <a href="#">política de privacidad</a>.
-                            </label>
+                        <div class="m-3">
+                            <div class="form-check ">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    value=""
+                                    id="terminos"
+                                    required
+                                />
+                                <label class="form-check-label" for="terminos">
+                                    Acepto los
+                                    <a class="text-decoration-none" href="#">términos y condiciones</a> y la
+                                    <a class="text-decoration-none" href="#">política de privacidad</a>.
+                                </label>
+                            </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100">
-                            Confirmar compra
-                        </button>
+                        <div class="m-3 mt-1">
+
+                            <button type="submit" class="btn btn-primary w-100">
+                                Confirmar compra
+                            </button>
+                        </div>
                     </form>
 
                     <script>
@@ -148,6 +152,70 @@
                     </script>
                 </div>
             </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+
+                <div class="card-header">
+                    <h5 class="mb-0">Resumen de compra</h5>
+                </div>
+                <div class="card-body">
+                    <p>Precio por entrada:</p>
+                    <p class="d-flex justify-content-between">
+                        <span>Cantidad de entradas:</span>
+                        <span id="cantidadResumen">1</span>
+                    </p>                    
+                    <p>Subtotal: </p>
+                    <p>Impuestos (10%):</p>
+                    <div style="height: 1px; background-color: gray; width: 100%;"></div>
+                    <p class="mt-2"><strong>Total: </strong></p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <p class="d-flex align-items-center gap-2">
+                        <i class="bi bi-info-circle text-primary"></i>
+                        <span>Las entradas son personales e instansferibles</span>
+                    </p>
+                    <p class="d-flex align-items-center gap-2">
+                        <i class="bi bi-info-circle text-primary"></i>
+                        <span>Puedes solicitar un reembolso hasta 48 horas antes del evento</span>
+                    </p>
+                    <p class="d-flex align-items-center gap-2">
+                        <i class="bi bi-info-circle text-primary"></i>
+                        <span>Recibirás tu entrada en tu correo electrónico</span>
+                    </p>
+                    <p class="d-flex align-items-center gap-2">
+                        <i class="bi bi-info-circle text-primary"></i>
+                        <span>Presenta tu entrada digital o impresa el dia del evento</span>
+                    </p>
+                </div>
+            </div>
+            <script>
+                function actualizarResumen() {
+                    const cantidad = document.getElementById("cantidad").value;
+                    document.getElementById("cantidadResumen").textContent = cantidad;
+                }
+            
+                function increment() {
+                    const input = document.getElementById("cantidad");
+                    input.value = parseInt(input.value || 0) + 1;
+                    actualizarResumen();
+                }
+            
+                function decrement() {
+                    const input = document.getElementById("cantidad");
+                    if (parseInt(input.value) > 1) {
+                        input.value = parseInt(input.value) - 1;
+                        actualizarResumen();
+                    }
+                }
+            
+                document.getElementById("cantidad").addEventListener("change", actualizarResumen);
+                
+                actualizarResumen();
+            </script>
         </div>
     </div>
 </div>
