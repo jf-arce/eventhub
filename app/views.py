@@ -198,4 +198,9 @@ def update_rating(request, event_id):
             else:
                 form.add_error(None, str(result))
     return redirect('event_detail', id=event.id)
-    
+
+@login_required
+def delete_rating(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    Rating.delete_rating(event=event, user=request.user)
+    return redirect('event_detail', id=event.id)
