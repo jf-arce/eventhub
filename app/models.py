@@ -100,7 +100,7 @@ class Rating(models.Model):
             user=user,
             title=title,
             text=text,
-            rating=rating
+            rating=int(rating)
         )
         return True, rating
     
@@ -119,7 +119,7 @@ class Rating(models.Model):
             rating_instance = cls.objects.get(event=event, user=user)
             rating_instance.title = title
             rating_instance.text = text
-            rating_instance.rating = rating
+            rating_instance.rating = int(rating)
             rating_instance.save()
             return True, rating_instance
         except cls.DoesNotExist:
