@@ -29,3 +29,27 @@
         </div>
     {% endfor %}
 </div>
+
+{% if not user_rated and event.organizer != request.user %}
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">Deja tu calificación</h5>
+        <form method="post" action="{% url 'add_rating' event.id %}">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="id_title" class="form-label">Título</label>
+                {{ form.title }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Calificación</label>
+                {{ form.rating }}
+            </div>
+            <div class="mb-3">
+                <label for="id_text" class="form-label">Comentario</label>
+                {{ form.text }}
+            </div>
+            <button type="submit" class="btn btn-primary">Enviar</button>
+        </form>
+    </div>
+</div>
+{% endif %}
