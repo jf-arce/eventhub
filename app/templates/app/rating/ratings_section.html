@@ -53,3 +53,27 @@
     </div>
 </div>
 {% endif %}
+
+{% if editing %}
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">Editar calificación</h5>
+        <form method="post" action="{% url 'update_rating' event.id %}">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="id_title" class="form-label">Título</label>
+                {{ form.title }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Calificación</label>
+                {{ form.rating }}
+            </div>
+            <div class="mb-3">
+                <label for="id_text" class="form-label">Comentario</label>
+                {{ form.text }}
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        </form>
+    </div>
+</div>
+{% endif %}
