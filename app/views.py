@@ -125,3 +125,7 @@ def event_form(request, id=None):
         "app/event_form.html",
         {"event": event, "user_is_organizer": request.user.is_organizer},
     )
+    
+def purchase_ticket(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    return render(request, 'app/purchase_ticket.html', {'event': event})        

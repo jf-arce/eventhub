@@ -129,3 +129,4 @@ class Ticket(models.Model):
         self.type = type or self.type
 
         self.save()
+

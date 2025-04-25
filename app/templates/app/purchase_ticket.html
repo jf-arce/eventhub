@@ -1,0 +1,154 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Comprar Entrada</h5>
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title">{{ event.title }}</h3>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="cantidad" class="form-label"
+                                >Cantidad de entradas</label
+                            >
+                            <div class="input-group" style="max-width: 200px">
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    onclick="decrement()"
+                                >
+                                    −
+                                </button>
+                                <input
+                                    type="number"
+                                    name="cantidad"
+                                    id="cantidad"
+                                    value="1"
+                                    min="1"
+                                    class="form-control text-center"
+                                />
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    onclick="increment()"
+                                >
+                                    +
+                                </button>
+                            </div>
+                            <p class="text-muted">
+                                Disponibles: <strong>{{ event.available_tickets }}</strong> entradas
+                            </p>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="tipoEntrada" class="form-label"
+                                >Tipo de entrada</label
+                            >
+                            <select
+                                class="form-select"
+                                id="tipoEntrada"
+                                name="tipoEntrada"
+                            >
+                                <option selected>Entrada General</option>
+                                <option>Entrada VIP</option>
+                            </select>
+                        </div>
+
+                        <h5 class="mt-4">Método de pago</h5>
+
+                        <div class="card p-3 bg-light mb-3">
+                            <div class="mb-3">
+                                <label for="numeroTarjeta" class="form-label"
+                                    >Número de tarjeta</label
+                                >
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="numeroTarjeta"
+                                    placeholder="1234 5678 9012 3456"
+                                />
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label
+                                        for="fechaExpiracion"
+                                        class="form-label"
+                                        >Fecha de expiración</label
+                                    >
+                                    <input
+                                        type="date"
+                                        class="form-control"
+                                        id="fechaExpiracion"
+                                        placeholder="MM/AA"
+                                    />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="cvv" class="form-label"
+                                        >CVV</label
+                                    >
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        id="cvv"
+                                        placeholder="123"
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="nombreTarjeta" class="form-label"
+                                    >Nombre en la tarjeta</label
+                                >
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="nombreTarjeta"
+                                    placeholder="Juan Pérez"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                value=""
+                                id="terminos"
+                                required
+                            />
+                            <label class="form-check-label" for="terminos">
+                                Acepto los
+                                <a href="#">términos y condiciones</a> y la
+                                <a href="#">política de privacidad</a>.
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">
+                            Confirmar compra
+                        </button>
+                    </form>
+
+                    <script>
+                        function increment() {
+                            const input = document.getElementById("cantidad");
+                            input.value = parseInt(input.value || 0) + 1;
+                        }
+
+                        function decrement() {
+                            const input = document.getElementById("cantidad");
+                            if (parseInt(input.value) > 1) {
+                                input.value = parseInt(input.value) - 1;
+                            }
+                        }
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
