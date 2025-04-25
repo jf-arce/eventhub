@@ -62,10 +62,14 @@ def home(request):
 @login_required
 def events(request):
     events = Event.objects.all().order_by("scheduled_at")
+    
     return render(
         request,
         "app/events.html",
-        {"events": events, "user_is_organizer": request.user.is_organizer},
+        {
+            "events": events, 
+            "user_is_organizer": request.user.is_organizer,
+        },
     )
 
 
@@ -92,28 +96,48 @@ def event_delete(request, id):
 @login_required
 def event_form(request, id=None):
     user = request.user
-
     if not user.is_organizer:
         return redirect("events")
+
+    error = None
 
     if request.method == "POST":
         title = request.POST.get("title")
         description = request.POST.get("description")
         date = request.POST.get("date")
         time = request.POST.get("time")
+        category_id = request.POST.get("category")
+
+        if not title or not description or not date or not time or not category_id:
+            error = "Todos los campos son obligatorios."
+            return render(
+                request,
+                "app/event_form.html",
+                {
+                    "event": request.POST,
+                    "user_is_organizer": user.is_organizer,
+                    "categorys": Category.objects.filter(is_active=True),
+                    "error": error,
+                },
+            )
 
         [year, month, day] = date.split("-")
         [hour, minutes] = time.split(":")
-
         scheduled_at = timezone.make_aware(
             datetime.datetime(int(year), int(month), int(day), int(hour), int(minutes))
         )
 
+        category = get_object_or_404(Category, pk=category_id)
+
         if id is None:
-            Event.new(title, description, scheduled_at, request.user)
+            # Crear un nuevo evento
+            success, errors = Event.new(title, description, scheduled_at, request.user, category)
+            if not success:
+                error = errors  # Enviar los errores si hay
         else:
+            # Actualizar un evento existente
             event = get_object_or_404(Event, pk=id)
-            event.update(title, description, scheduled_at, request.user)
+            # event.update(title, description, scheduled_at, request.user, category)
 
         return redirect("events")
 
@@ -121,11 +145,19 @@ def event_form(request, id=None):
     if id is not None:
         event = get_object_or_404(Event, pk=id)
 
+    categorys = Category.objects.filter(is_active=True)
+
     return render(
         request,
         "app/event_form.html",
-        {"event": event, "user_is_organizer": request.user.is_organizer},
+        {
+            "event": event,
+            "user_is_organizer": request.user.is_organizer,
+            "categorys": categorys,
+            "error": error,
+        },
     )
+
 
 @login_required
 def categorys(request):
