@@ -179,4 +179,23 @@ def edit_rating(request, event_id):
             'editing': True,
         }
     )
+@login_required
+def update_rating(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    user_rating = Rating.objects.filter(event=event, user=request.user).first()
+    if request.method == 'POST':
+        form = RatingForm(request.POST, instance=user_rating)
+        if form.is_valid():
+            success, result = Rating.update_rating(
+                event=event,
+                user=request.user,
+                title=form.cleaned_data['title'],
+                text=form.cleaned_data['text'],
+                rating=form.cleaned_data['rating'],
+            )
+            if success:
+                return redirect('event_detail', id=event.id)
+            else:
+                form.add_error(None, str(result))
+    return redirect('event_detail', id=event.id)
     
