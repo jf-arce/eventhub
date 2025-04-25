@@ -142,3 +142,22 @@ def event_form(request, id=None):
         "app/event_form.html",
         {"event": event, "user_is_organizer": request.user.is_organizer},
     )
+
+@login_required
+def add_rating(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    if request.method == 'POST':
+        form = RatingForm(request.POST)
+        if form.is_valid():
+            success, result = Rating.create_rating(
+                event=event,
+                user=request.user,
+                title=form.cleaned_data['title'],
+                text=form.cleaned_data['text'],
+                rating=form.cleaned_data['rating'],
+            )
+            if success:
+                return redirect('event_detail', id=event.id)
+            else:
+                form.add_error(None, str(result))
+    return redirect('event_detail', id=event.id)
