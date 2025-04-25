@@ -1,0 +1,31 @@
+<div class="mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Calificaciones y Reseñas ({{ ratings|length }})</h3>
+    </div>
+
+    {% for rating in ratings %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex flex-column">
+                    <div class="d-flex justify-content-between mb-2">
+                        <div>
+                            <h5 class="mb-0">{{ rating.user.username }}</h5>
+                            <div class="text-muted small">{{ rating.created_at|date:"d M Y, H:i" }}</div>
+                        </div>
+                    </div>
+                    <h6 class="mb-1">{{ rating.title }}</h6>
+                    <div class="text-warning mb-2">
+                        {% for i in "12345" %}
+                            {% if rating.rating >= forloop.counter %}
+                                <i class="bi bi-star-fill"></i>
+                            {% else %}
+                                <i class="bi bi-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <p class="mb-2">{{ rating.text }}</p>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
