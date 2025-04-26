@@ -45,6 +45,12 @@
                 </div>
             </div>
         </div>
+    {% empty %}
+        <div class="text-center p-5 mb-4 bg-white rounded shadow-sm">
+            <div class="display-4 mb-3">🌟</div>
+            <h4 class="text-secondary mb-3">Sin reseñas aún</h4>
+            <p class="text-muted">¡Este evento está esperando opiniones! Comparte tu experiencia y ayuda a otros asistentes.</p>
+        </div>
     {% endfor %}
 
     {% if editing %}
