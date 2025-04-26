@@ -1,0 +1,39 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container my-5">
+    <table class="table">
+        <h2 class="mb-4">Entradas para el evento: {{ event.title }}</h2>
+
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Nombre</th>
+                <th scope="col">Apellido</th>
+                <th scope="col">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th scope="row">1</th>
+                <td>Carlos</td>
+                <td>Perez</td>
+                <td>
+                    <div class="hstack gap-2">
+                        <a href="#" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil" aria-hidden="true"></i>
+                        </a>
+                        <form action="#" method="POST" class="d-inline">
+                            {% csrf_token %}
+                            <button
+                                type="submit"
+                                class="btn btn-sm btn-outline-danger"
+                            >
+                                <i class="bi bi-trash" aria-hidden="true"></i>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

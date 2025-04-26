@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .models import Event, User
+from .models import Event, User, Ticket
 
 
 def register(request):
@@ -129,3 +129,9 @@ def event_form(request, id=None):
 def purchase_ticket(request, event_id):
     event = get_object_or_404(Event, id=event_id)
     return render(request, 'app/purchase_ticket.html', {'event': event})        
+
+
+def view_ticket(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    return render(request, 'app/view_ticket.html', {'event': event})        
+

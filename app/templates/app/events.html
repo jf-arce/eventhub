@@ -39,6 +39,14 @@
                                title="Ver detalle">
                                 <i class="bi bi-eye" aria-hidden="true"></i>
                             </a>
+                            <a href="{% url 'view_ticket' event.id %}" 
+                            class="btn btn-sm btn-outline-primary"
+                            aria-label="Ver entradas"
+                            title="Ver entradas">
+                             <i class="bi bi-ticket-perforated" aria-hidden="true"></i>
+                         </a>
+                            
+                            
                             {% if user_is_organizer %}
                                 <a href="{% url 'event_edit' event.id %}"
                                     class="btn btn-sm btn-outline-secondary"
