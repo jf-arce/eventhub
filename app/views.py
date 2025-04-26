@@ -130,14 +130,11 @@ def event_form(request, id=None):
         category = get_object_or_404(Category, pk=category_id)
 
         if id is None:
-            # Crear un nuevo evento
             success, errors = Event.new(title, description, scheduled_at, request.user, category)
             if not success:
-                error = errors  # Enviar los errores si hay
+                error = errors 
         else:
-            # Actualizar un evento existente
             event = get_object_or_404(Event, pk=id)
-            # event.update(title, description, scheduled_at, request.user, category)
 
         return redirect("events")
 
@@ -168,11 +165,13 @@ def categorys(request):
         "app/categorys/categorys.html",
         {
             "categorys": categorys,
+            "user_is_organizer": request.user.is_organizer,
         },
     )
 
 @login_required
 def category_form(request, id=None):
+    print("Llamando a category_form con ID:", id)
     user = request.user
 
     if not user.is_organizer:
@@ -186,7 +185,7 @@ def category_form(request, id=None):
             Category.new(name, description)
         else:
             category = get_object_or_404(Category, pk=id)
-            # category.update(name, description)
+            category.update(name, description)
 
         return redirect("categorys")
 
@@ -197,5 +196,29 @@ def category_form(request, id=None):
     return render(
         request,
         "app/categorys/category_form.html",
-        {"category": category, "user_is_organizer": request.user.is_organizer},
+        {"category": category, 
+        "user_is_organizer": request.user.is_organizer},
     )
+
+@login_required
+def category_delete(request, category_id):
+    user = request.user
+    if not user.is_organizer:
+        return redirect("categorys")
+
+    category = get_object_or_404(Category, pk=category_id)
+
+    if request.method == "POST":
+        category.delete()
+        return redirect("categorys")
+
+    return render(
+        request,
+        "app/categorys/category_confirm_delete.html",
+        {"category": category},
+    )
+
+@login_required
+def category_detail(request, id):
+    category = get_object_or_404(Event, pk=id)
+    return render(request, "app/categorys/category_detail.html", {"category": category})
