@@ -84,7 +84,7 @@
                 </form>
             </div>
         </div>
-    {% elif not user_rated %}
+    {% elif not user_rated and request.user != event.organizer %}
         <div class="card">
             <div class="card-body">
                 <form method="post" action="{% url 'add_rating' event.id %}">
