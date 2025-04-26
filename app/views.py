@@ -72,7 +72,7 @@ def events(request):
 @login_required
 def event_detail(request, id):
     event = get_object_or_404(Event, id=id)
-    ratings = event.ratings.all()
+    ratings = Rating.objects.filter(event=event)
     user_rating = Rating.objects.filter(event=event, user=request.user).first()
     user_rated = user_rating is not None
     editing = False
@@ -157,17 +157,17 @@ def add_rating(request, event_id):
                 rating=form.cleaned_data['rating'],
             )
             if success:
-                return redirect('event_detail', id=event.id)
+                return redirect('event_detail', id=event.pk)
             else:
                 form.add_error(None, str(result))
-    return redirect('event_detail', id=event.id)
+    return redirect('event_detail', id=event.pk)
 
 @login_required
 def edit_rating(request, event_id):
     event = get_object_or_404(Event, id=event_id)
     user_rating = Rating.objects.filter(event=event, user=request.user).first()
     form = RatingForm(instance=user_rating)
-    ratings = event.ratings.all()
+    ratings = Rating.objects.filter(event=event)
     return render(
         request,
         'app/event_detail.html',
@@ -194,10 +194,10 @@ def update_rating(request, event_id):
                 rating=form.cleaned_data['rating'],
             )
             if success:
-                return redirect('event_detail', id=event.id)
+                return redirect('event_detail', id=event.pk)
             else:
                 form.add_error(None, str(result))
-    return redirect('event_detail', id=event.id)
+    return redirect('event_detail', id=event.pk)
 
 @login_required
 def delete_rating(request, event_id):
@@ -212,4 +212,4 @@ def delete_rating(request, event_id):
         else:
             # Si no es organizador, solo puede borrar su propia reseña
             Rating.delete_rating(event=event, user=request.user)
-    return redirect('event_detail', id=event.id)
+    return redirect('event_detail', id=event.pk)
