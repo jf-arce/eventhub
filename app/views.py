@@ -1,8 +1,9 @@
-import datetime
+import datetime, uuid
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.contrib import messages
 
 from .models import Event, User, Ticket
 
@@ -126,12 +127,60 @@ def event_form(request, id=None):
         {"event": event, "user_is_organizer": request.user.is_organizer},
     )
     
+@login_required
 def purchase_ticket(request, event_id):
     event = get_object_or_404(Event, id=event_id)
-    return render(request, 'app/purchase_ticket.html', {'event': event})        
+    
+    if request.method == "POST":
+        try:
+            quantity = request.POST.get("cantidad")
+            ticket_type = request.POST.get("tipoEntrada", "GENERAL")
+            
+            ticket_code = str(uuid.uuid4())[:8].upper()
+            
+            buy_date = timezone.now().date()
+            
+            
+            success, errors = Ticket.new(
+                buy_date=buy_date,
+                ticket_code=ticket_code,
+                quantity=quantity,
+                type=ticket_type,
+                event=event,       
+                user=request.user  
+            )
+            
+            if success:
+                messages.success(request, "Ticket comprado exitosamente!")
+                return redirect('view_ticket', event_id=event_id)
+            else:
+                if errors:
+                    for error in errors.values():
+                        messages.error(request, error)
+                return render(request, 'app/purchase_ticket.html', {
+                    'event': event,
+                    'errors': errors or {}
+                })
+                
+        except Exception as e:
+            messages.error(request, "Error al procesar la compra. Por favor intente nuevamente.")
+            return render(request, 'app/purchase_ticket.html', {
+                'event': event
+            })
+            
+    return render(request, 'app/purchase_ticket.html', {'event': event})
 
-
+@login_required
 def view_ticket(request, event_id):
     event = get_object_or_404(Event, id=event_id)
-    return render(request, 'app/view_ticket.html', {'event': event})        
+    tickets = Ticket.objects.filter(event=event, user=request.user)
+    return render(request, 'app/view_ticket.html', {
+        'event': event,
+        'tickets': tickets
+    }) 
+
+@login_required
+def edit_ticket(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    return render(request, 'app/edit_ticket.html', {'event': event})
 

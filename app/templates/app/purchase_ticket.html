@@ -12,7 +12,7 @@
                     <p class="card-text">{{ venue.name }}</p>
                     <p class="card-text">{{ venue.contact }}</p>
 
-                    <form method="post">
+                    <form method="POST" action="{% url 'purchase_ticket' event.id %}">
                         {% csrf_token %}
                         <div class="m-1">
                             <label for="cantidad" class="form-label"

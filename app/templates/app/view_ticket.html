@@ -6,33 +6,41 @@
         <thead>
             <tr>
                 <th scope="col">#</th>
-                <th scope="col">Nombre</th>
-                <th scope="col">Apellido</th>
+                <th scope="col">Código del ticket</th>
+                <th scope="col">Fecha de compra</th>
+                <th scope="col">Tipo de ticket</th>
+                <th scope="col">Cantidad</th>
                 <th scope="col">Acciones</th>
             </tr>
         </thead>
         <tbody>
+            {% for ticket in tickets %}
             <tr>
-                <th scope="row">1</th>
-                <td>Carlos</td>
-                <td>Perez</td>
+                <th scope="row">{{ forloop.counter }}</th>
+                <td>{{ ticket.ticket_code }}</td>
+                <td>{{ ticket.buy_date|date:"d/m/Y" }}</td>
+                <td>{{ ticket.type }}</td>
+                <td>{{ ticket.quantity }}</td>
                 <td>
                     <div class="hstack gap-2">
-                        <a href="#" class="btn btn-sm btn-outline-primary">
+                        <a href="{% url 'edit_ticket' event_id=event.id %}" 
+                            class="btn btn-sm btn-outline-secondary">
                             <i class="bi bi-pencil" aria-hidden="true"></i>
                         </a>
                         <form action="#" method="POST" class="d-inline">
                             {% csrf_token %}
-                            <button
-                                type="submit"
-                                class="btn btn-sm btn-outline-danger"
-                            >
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
                                 <i class="bi bi-trash" aria-hidden="true"></i>
                             </button>
                         </form>
                     </div>
                 </td>
             </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">No tienes entradas para este evento</td>
+            </tr>
+            {% endfor %}
         </tbody>
     </table>
 </div>

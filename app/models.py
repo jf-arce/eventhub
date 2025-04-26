@@ -74,11 +74,14 @@ class Event(models.Model):
 
         self.save()
 
+
 class Ticket(models.Model):
     TICKET_TYPES = [
         ("GENERAL", "GENERAL"),
         ("VIP", "VIP"),
     ]
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="tickets")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tickets")
     buy_date = models.DateField()
     ticket_code = models.CharField(max_length=100, unique=True)
     quantity = models.IntegerField()
@@ -107,7 +110,7 @@ class Ticket(models.Model):
         return errors
     
     @classmethod
-    def new(cls, buy_date, ticket_code, quantity, type):
+    def new(cls, buy_date, ticket_code, quantity, type, event, user):
         errors = Ticket.validate(quantity, type)
 
         if len(errors.keys()) > 0:
@@ -118,6 +121,8 @@ class Ticket(models.Model):
             ticket_code=ticket_code,
             quantity=quantity,
             type=type,
+            event=event,
+            user=user
         )
 
         return True, None
