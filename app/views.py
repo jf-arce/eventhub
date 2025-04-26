@@ -173,11 +173,16 @@ def purchase_ticket(request, event_id):
 @login_required
 def view_ticket(request, event_id):
     event = get_object_or_404(Event, id=event_id)
-    tickets = Ticket.objects.filter(event=event, user=request.user)
-    return render(request, 'app/view_ticket.html', {
-        'event': event,
-        'tickets': tickets
-    }) 
+    
+    if request.method == 'POST':
+        ticket_id = request.POST.get('ticket_id')
+        if ticket_id:
+            ticket = get_object_or_404(Ticket, id=ticket_id, event_id=event_id)
+            ticket.delete()
+            return redirect('view_ticket', event_id=event_id)
+    
+    tickets = Ticket.objects.filter(event=event)
+    return render(request, 'app/view_ticket.html', {'tickets': tickets, 'event': event}) 
 
 @login_required
 def edit_ticket(request, event_id):
