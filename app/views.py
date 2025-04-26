@@ -202,5 +202,14 @@ def update_rating(request, event_id):
 @login_required
 def delete_rating(request, event_id):
     event = get_object_or_404(Event, id=event_id)
-    Rating.delete_rating(event=event, user=request.user)
+    if request.method == 'POST':
+        # Si es el organizador, puede borrar cualquier reseña de su evento
+        if request.user == event.organizer:
+            user_id = request.POST.get('rating_user_id')
+            rating = Rating.objects.filter(event=event, user_id=user_id).first()
+            if rating:
+                rating.delete()
+        else:
+            # Si no es organizador, solo puede borrar su propia reseña
+            Rating.delete_rating(event=event, user=request.user)
     return redirect('event_detail', id=event.id)
