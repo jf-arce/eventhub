@@ -1,12 +1,17 @@
 {% extends 'base.html' %} {% block content %}
 <div class="container my-5">
-    <table class="table">
-        <h2 class="mb-4">Entradas para el evento: {{ event.title }}</h2>
+    <h2 class="mb-4">
+        Entradas para: {{ event.title }}
+    </h2>
 
+    <table class="table">
         <thead>
             <tr>
                 <th scope="col">#</th>
                 <th scope="col">Código del ticket</th>
+                {% if user_is_organizer %}
+                <th scope="col">Comprador</th>
+                {% endif %}
                 <th scope="col">Fecha de compra</th>
                 <th scope="col">Tipo de ticket</th>
                 <th scope="col">Cantidad</th>
@@ -18,11 +23,15 @@
             <tr>
                 <th scope="row">{{ forloop.counter }}</th>
                 <td>{{ ticket.ticket_code }}</td>
+                {% if user_is_organizer %}
+                <td>{{ ticket.user.username }}</td>
+                {% endif %}
                 <td>{{ ticket.buy_date|date:"d/m/Y" }}</td>
                 <td>{{ ticket.type }}</td>
                 <td>{{ ticket.quantity }}</td>
                 <td>
                     <div class="hstack gap-2">
+                        {% if user_is_organizer or ticket.user == user %}
                         <a
                             href="{% url 'edit_ticket' event_id=event.id %}"
                             class="btn btn-sm btn-outline-secondary"
@@ -48,13 +57,19 @@
                                 <i class="bi bi-trash" aria-hidden="true"></i>
                             </button>
                         </form>
+                        {% endif %}
                     </div>
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" class="text-center">
-                    No tienes entradas para este evento
+                <td
+                    colspan="{{ user_is_organizer|yesno:'7,6' }}"
+                    class="text-center"
+                >
+                    {% if user_is_organizer %} No hay entradas vendidas para
+                    este evento {% else %} No tienes entradas para este evento
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}

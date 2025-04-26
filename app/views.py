@@ -177,12 +177,23 @@ def view_ticket(request, event_id):
     if request.method == 'POST':
         ticket_id = request.POST.get('ticket_id')
         if ticket_id:
-            ticket = get_object_or_404(Ticket, id=ticket_id, event_id=event_id)
+            if request.user.is_organizer:
+                ticket = get_object_or_404(Ticket, id=ticket_id, event_id=event_id)
+            else:
+                ticket = get_object_or_404(Ticket, id=ticket_id, event_id=event_id, user=request.user)
             ticket.delete()
             return redirect('view_ticket', event_id=event_id)
     
-    tickets = Ticket.objects.filter(event=event)
-    return render(request, 'app/view_ticket.html', {'tickets': tickets, 'event': event}) 
+    if request.user.is_organizer:
+        tickets = Ticket.objects.filter(event=event)
+    else:
+        tickets = Ticket.objects.filter(event=event, user=request.user)
+    
+    return render(request, 'app/view_ticket.html', {
+        'tickets': tickets, 
+        'event': event,
+        'user_is_organizer': request.user.is_organizer
+    })
 
 @login_required
 def edit_ticket(request, event_id):
