@@ -7,7 +7,9 @@
         <div class="card-body">
             {% for comment in comments %}
             <div class="comment-item mb-3 p-3 border rounded">
-                <div class="d-flex justify-content-between align-items-center mb-2">
+                <div
+                    class="d-flex justify-content-between align-items-center mb-2"
+                >
                     <div class="d-flex align-items-center">
                         <i class="bi bi-person-circle me-2 text-primary"></i>
                         <div>
@@ -28,14 +30,40 @@
                         >
                             <i class="bi bi-three-dots-vertical"></i>
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenu{{ comment.id }}">
+                        <ul
+                            class="dropdown-menu dropdown-menu-end"
+                            aria-labelledby="dropdownMenu{{ comment.id }}"
+                        >
                             <li>
-                                <a class="dropdown-item" href="{% url 'comment_update' comment.id %}">Editar</a>
+                                {% comment %}
+                                <a
+                                    class="dropdown-item"
+                                    href="{% url 'comment_update' comment.id %}"
+                                    >Editar</a
+                                >
+                                {% endcomment %}
+                                <button
+                                    type="button"
+                                    class="btn btn-primary"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#exampleModal{{ comment.id }}"
+                                >
+                                    Editar
+                                </button>
                             </li>
                             <li>
-                                <form method="post" action="{% url 'comment_delete' comment.id %}" class="d-inline">
+                                <form
+                                    method="post"
+                                    action="{% url 'event_comment_delete' comment.id %}"
+                                    class="d-inline"
+                                >
                                     {% csrf_token %}
-                                    <button type="submit" class="dropdown-item text-danger">Eliminar</button>
+                                    <button
+                                        type="submit"
+                                        class="dropdown-item text-danger"
+                                    >
+                                        Eliminar
+                                    </button>
                                 </form>
                             </li>
                         </ul>
@@ -43,6 +71,36 @@
                 </div>
                 <h5 class="mt-2">{{ comment.title }}</h5>
                 <p class="mb-0">{{ comment.text }}</p>
+            </div>
+
+            <div class="modal fade" id="exampleModal{{ comment.id }}" tabindex="-1" aria-labelledby="exampleModalLabel{{ comment.id }}" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel{{ comment.id }}">
+                                Editar comentario
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="post" action="{% url 'comment_update' comment.id %}">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="edit-comment-title-{{ comment.id }}" class="form-label">Título del comentario *</label>
+                                    <input type="text" class="form-control" id="edit-comment-title-{{ comment.id }}" name="title" value="{{ comment.title }}" placeholder="Escribe un título para tu comentario...">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-comment-text-{{ comment.id }}" class="form-label">Contenido del comentario *</label>
+                                    <textarea class="form-control" id="edit-comment-text-{{ comment.id }}" name="text" rows="3" placeholder="Escribe tu comentario aquí...">{{ comment.text }}</textarea>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
             {% empty %}
             <p class="text-muted">No hay comentarios para este evento.</p>

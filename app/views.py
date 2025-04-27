@@ -189,7 +189,6 @@ def add_comment(request, event_id):
 
 @login_required
 def comment_update(request, id):
-    user = request.user
 
     if request.method == "POST":
         title = request.POST.get("title")
@@ -201,4 +200,15 @@ def comment_update(request, id):
         return redirect("event_detail", comment.event.pk)
     
     comment = get_object_or_404(Comment, pk=id)
+    return redirect("event_detail", comment.event.pk)
+
+@login_required
+def event_comment_delete(request, id):
+    comment = get_object_or_404(Comment, pk=id)
+
+    if request.method == "POST":
+        comment = get_object_or_404(Comment, pk=id)
+        comment.delete()
+        return redirect("event_detail", comment.event.pk)
+
     return redirect("event_detail", comment.event.pk)
