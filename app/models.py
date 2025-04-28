@@ -115,3 +115,13 @@ class RefoundRequest(models.Model):
         )
 
         return True, None
+
+    def update(self,approved, approval_date ,ticket_code, reason, created_at, user):
+        self.approved = approved or self.approved
+        self.approval_date = approval_date or self.approval_date
+        self.ticket_code = ticket_code or self.ticket_code
+        self.reason = reason or self.reason
+        self.created_at = created_at or self.created_at
+        self.user = user or self.user
+
+        self.save()
