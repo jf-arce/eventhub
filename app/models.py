@@ -73,3 +73,40 @@ class Event(models.Model):
         self.organizer = organizer or self.organizer
 
         self.save()
+        
+
+class Notification(models.Model):
+    class Priority(models.TextChoices):
+        HIGH = 'high', 'High'
+        MEDIUM = 'medium', 'Medium'
+        LOW = 'low', 'Low'
+        
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    priority = models.CharField(
+        max_length=10,
+        choices=Priority.choices,
+        default=Priority.LOW,
+    )
+    is_read = models.BooleanField(default=False)
+    users = models.ManyToManyField(User, related_name="notifications")
+    
+    def __str__(self):
+        return self.title
+    
+    @classmethod
+    def validate(cls, title, message, priority):
+        errors = {}
+
+        if title == "":
+            errors["title"] = "Por favor ingrese un titulo"
+
+        if message == "":
+            errors["message"] = "Por favor ingrese un mensaje"
+
+        if priority not in [cls.Priority.HIGH, cls.Priority.MEDIUM, cls.Priority.LOW]:
+            errors["priority"] = "Prioridad no válida"
+
+        return errors
+    
