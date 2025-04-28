@@ -78,6 +78,8 @@ def event_detail(request, id):
         {
             "event": event,
             "comments": comments,
+            "user_is_organizer": request.user.is_organizer,
+            "user_is_admin": request.user.is_superuser,
         }
     )
 
@@ -148,7 +150,7 @@ def comments(request):
 @login_required
 def comment_delete(request, id):
     user = request.user
-    if not user.is_organizer:
+    if not (user.is_organizer or user.is_superuser):
         return redirect("comments")
 
     if request.method == "POST":

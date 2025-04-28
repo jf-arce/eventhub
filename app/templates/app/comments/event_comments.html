@@ -16,45 +16,47 @@
                         </div>
                     </div>
                     <div class="dropdown">
-                        <button
-                            class="btn btn-link text-dark p-0"
-                            type="button"
-                            id="dropdownMenu{{ comment.id }}"
-                            data-bs-toggle="dropdown"
-                            aria-expanded="false"
-                        >
-                            <i class="bi bi-three-dots-vertical"></i>
-                        </button>
-                        <ul
-                            class="dropdown-menu dropdown-menu-end"
-                            aria-labelledby="dropdownMenu{{ comment.id }}"
-                        >
-                            <li>
-                                <button
-                                    type="button"
-                                    class="dropdown-item"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#exampleModal{{ comment.id }}"
-                                >
-                                    Editar
-                                </button>
-                            </li>
-                            <li>
-                                <form
-                                    method="post"
-                                    action="{% url 'event_comment_delete' comment.id %}"
-                                    class="d-inline"
-                                >
-                                    {% csrf_token %}
+                        {% if comment.user == request.user %}
+                            <button
+                                class="btn btn-link text-dark p-0"
+                                type="button"
+                                id="dropdownMenu{{ comment.id }}"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                            >
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul
+                                class="dropdown-menu dropdown-menu-end"
+                                aria-labelledby="dropdownMenu{{ comment.id }}"
+                            >
+                                <li>
                                     <button
-                                        type="submit"
-                                        class="dropdown-item text-danger"
+                                        type="button"
+                                        class="dropdown-item"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#exampleModal{{ comment.id }}"
                                     >
-                                        Eliminar
+                                        Editar
                                     </button>
-                                </form>
-                            </li>
-                        </ul>
+                                </li>
+                                <li>
+                                    <form
+                                        method="post"
+                                        action="{% url 'event_comment_delete' comment.id %}"
+                                        class="d-inline"
+                                    >
+                                        {% csrf_token %}
+                                        <button
+                                            type="submit"
+                                            class="dropdown-item text-danger"
+                                        >
+                                            Eliminar
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        {% endif %}
                     </div>
                 </div>
                 <h6 class="fw-bold mb-1 mt-2">{{ comment.title }}</h6>
@@ -94,9 +96,11 @@
             <p class="text-muted">No hay comentarios para este evento.</p>
             {% endfor %}
 
-            <div class="mt-3 p-2">
-                {% include './add_comment.html' with errors=errors form_data=form_data %}
-            </div>
+            {% if not user_is_organizer and not user_is_admin %}
+                <div class="mt-3 p-2">
+                    {% include './add_comment.html' with errors=errors form_data=form_data %}
+                </div>
+            {% endif %}
         </div>
     </div>
 </section>
