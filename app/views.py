@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
@@ -60,11 +60,25 @@ def home(request):
 
 @login_required
 def events(request):
-    events = Event.objects.all().order_by("scheduled_at")
+    date_filter = request.GET.get('date')
+    
+    if date_filter:
+        try:
+            date_filter = datetime.strptime(date_filter, '%Y-%m-%d').date()
+            events = Event.filter_events(date_filter=date_filter)
+        except ValueError:
+            events = Event.objects.all().order_by("scheduled_at")
+    else:
+        events = Event.objects.all().order_by("scheduled_at")
+
     return render(
         request,
         "app/events.html",
-        {"events": events, "user_is_organizer": request.user.is_organizer},
+        {
+            "events": events, 
+            "user_is_organizer": request.user.is_organizer,
+            "selected_date": date_filter if date_filter else ''
+        }
     )
 
 
@@ -105,7 +119,7 @@ def event_form(request, id=None):
         [hour, minutes] = time.split(":")
 
         scheduled_at = timezone.make_aware(
-            datetime.datetime(int(year), int(month), int(day), int(hour), int(minutes))
+            datetime(int(year), int(month), int(day), int(hour), int(minutes))
         )
 
         if id is None:
