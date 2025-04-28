@@ -1,4 +1,5 @@
-{% extends 'base.html' %} {% block content %}
+{% extends 'base.html' %} 
+{% block content %}
 <div class="container my-5">
     <div class="row ">
         <div class="col-md-8 ">
@@ -12,7 +13,7 @@
                     <p class="card-text">{{ venue.name }}</p>
                     <p class="card-text">{{ venue.contact }}</p>
 
-                    <form method="POST" action="{% url 'purchase_ticket' event.id %}">
+                    <form method="POST" action="{% url 'purchase_ticket' event.id %}" id="purchaseForm" onsubmit="handleSubmit(event)">
                         {% csrf_token %}
                         <div class="m-1">
                             <label for="cantidad" class="form-label"
@@ -142,7 +143,35 @@
                         </div>
                     </form>
 
+                    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
                     <script>
+                        function handleSubmit(event) {
+                            event.preventDefault();
+                            
+                            Swal.fire({
+                                title: 'Procesando pago...',
+                                text: 'Por favor espere',
+                                allowOutsideClick: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                }
+                            });
+
+                            setTimeout(() => {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: '¡Pago Exitoso!',
+                                    text: 'Se ha realizado el pago de manera exitosa',
+                                    confirmButtonText: 'OK'
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        document.getElementById('purchaseForm').submit();
+                                    }
+                                });
+                            }, 2000);
+                        }
+
                         function increment() {
                             const input = document.getElementById("cantidad");
                             input.value = parseInt(input.value || 0) + 1;
