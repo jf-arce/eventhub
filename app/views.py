@@ -184,3 +184,17 @@ def venue_create(request):
         "app/venues/add_venues.html",
         {"user_is_organizer": request.user.is_organizer}
     )
+
+@login_required
+def venue_delete(request, id):
+    user = request.user
+    
+    if not user.is_organizer:
+        return redirect("events")
+
+    if request.method == "POST":
+        venue = get_object_or_404(Venue, pk=id)
+        venue.delete()
+        return redirect("venues")
+
+    return redirect("venues")
