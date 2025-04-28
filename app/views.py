@@ -126,6 +126,7 @@ def event_form(request, id=None):
         {"event": event, "user_is_organizer": request.user.is_organizer},
     )
 
+@login_required
 def notifications(request):
     user = request.user
     
@@ -141,5 +142,100 @@ def notifications(request):
             "notifications": notifications
         },
     )
+
+@login_required
+def notification_delete(request, id):
+    user = request.user
     
+    if not (user.is_organizer or user.is_superuser):
+        return redirect("events")
     
+    if request.method == "POST":
+        notification = get_object_or_404(Notification, pk=id)
+        notification.delete()
+        return redirect("notifications")
+    
+    return redirect("notifications")
+
+@login_required
+def notification_detail(request, id):
+    user = request.user
+    
+    if not (user.is_organizer or user.is_superuser):
+        return redirect("events")
+    
+    notification = get_object_or_404(Notification, pk=id)
+    
+    return render(
+        request,
+        "app/notifications/notification_detail.html",
+        {
+            "notification": notification
+        },
+    )
+
+@login_required 
+def notification_form(request, id=None):
+    user = request.user
+
+    if not (user.is_organizer or user.is_superuser):
+        return redirect("events")
+
+    if request.method == "POST":
+        title = request.POST.get("title")
+        message = request.POST.get("message")
+        priority = request.POST.get("priority")
+        event_id = request.POST.get("event")
+        destination = request.POST.get("destination")
+        
+        Notification.validate(title, message, priority)
+
+        event = get_object_or_404(Event, pk=event_id)
+        
+        if destination == "all":
+            # # Obtener todos los usuarios con tickets para el evento
+            # tickets = Ticket.objects.filter(event=event)
+            # users = [ticket.user for ticket in tickets]
+
+            # # Crear la notificación para cada usuario
+            # for user in users:
+            #     notification = Notification.objects.create(
+            #         title=title,
+            #         message=message,
+            #         priority=priority,
+            #         event=event,
+            #     )
+            #     notification.users.add(user)
+            return redirect("notifications")
+
+        elif destination == "users":
+            user_id = request.POST.get("specific_user")
+            specific_user = get_object_or_404(User, pk=user_id)
+
+            notification = Notification.objects.create(
+                title=title,
+                message=message,
+                priority=priority,
+                event=event,
+            )
+            notification.users.add(specific_user)
+
+        return redirect("notifications")
+
+    notification = {}
+    if id is not None:
+        notification = get_object_or_404(Notification, pk=id)
+
+    events = Event.objects.all()
+    users = User.objects.all()
+
+    return render(
+        request,
+        "app/notifications/notification_form.html",
+        {
+            "notification": notification,
+            "events": events,
+            "users": users,
+            "priority": Notification.Priority,
+        },
+    )

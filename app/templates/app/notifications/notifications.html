@@ -6,44 +6,96 @@
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Gestión de Notificaciones</h1>
-        <a
-            href="{% url 'event_form' %}"
-            class="btn btn-primary"
-        >
+        <a href="{% url 'notification_form' %}" class="btn btn-primary">
             <i class="bi bi-plus-circle me-2" aria-hidden="true"></i>
             Crear Notificación
         </a>
     </div>
 
-    <table class="table">
-        <thead>
+    <div class="card mb-4 p-3">
+        <form method="get" class="row g-2">
+            <div class="col-md-4">
+                <input type="text" name="search" class="form-control" placeholder="Buscar notificaciones..." value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-3">
+                <select name="event" class="form-select">
+                    <option value="">Todos los eventos</option>
+                    {% for event in events %}
+                        <option value="{{ event.id }}" {% if request.GET.event == event.id|stringformat:"s" %}selected{% endif %}>
+                            {{ event.title }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="priority" class="form-select">
+                    <option value="">Todas las prioridades</option>
+                    <option value="normal" {% if request.GET.priority == 'normal' %}selected{% endif %}>Normal</option>
+                    <option value="alta" {% if request.GET.priority == 'alta' %}selected{% endif %}>Alta</option>
+                    <option value="baja" {% if request.GET.priority == 'baja' %}selected{% endif %}>Baja</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">Filtrar</button>
+            </div>
+        </form>
+    </div>
+
+    <table class="table align-middle">
+        <thead class="table-light">
             <tr>
                 <th>Título</th>
                 <th>Evento</th>
                 <th>Destinatarios</th>
                 <th>Prioridad</th>
-                <th>Fecha de Envío</th>
+                <th>Fecha de envío</th>
                 <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
-            {% for notification in notifications%}
+            {% for notification in notifications %}
                 <tr>
                     <td>{{ notification.title }}</td>
-                    <td>{{ notification.event.title }}</td>
+                    <td>
+                        <a href="{% url 'event_detail' notification.event.id %}" class="text-decoration-none">
+                            {{ notification.event.title }}
+                        </a>
+                    </td>
                     <td>
                         {% if notification.users.count == 1 %}
-                            Usuario específico
+                            <span class="badge bg-secondary">Usuario específico</span>
                         {% else %}
-                            Todos ({{ notification.users.count }})
+                            <span class="badge bg-info text-dark">Todos ({{ notification.users.count }})</span>
                         {% endif %}
                     </td>
-                    <td>{{ notification.get_priority_display }}</td>
-                    <td>{{ notification.created_at }}</td>
+                    <td>
+                        {% if notification.priority == 'high' %}
+                            <span class="badge bg-danger">Alta</span>
+                        {% elif notification.priority == 'low' %}
+                            <span class="badge bg-success">Baja</span>
+                        {% else %}
+                            <span class="badge bg-primary">Normal</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ notification.created_at|date:"d M Y, H:i" }}</td>
+                    <td class="d-flex gap-2">
+                        <a href="{% url 'notification_detail' notification.id %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        {% comment %} <a href="{% url 'notification_edit' notification.id %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-pencil"></i>
+                        </a> {% endcomment %}
+                        <form action="{% url 'notification_delete' notification.id %}" method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Estás seguro que quieres eliminar esta notificación?')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="4" class="text-center">No hay notificaciones disponibles</td>
+                    <td colspan="6" class="text-center">No hay notificaciones disponibles</td>
                 </tr>
             {% endfor %}
         </tbody>

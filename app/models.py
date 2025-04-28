@@ -78,7 +78,7 @@ class Event(models.Model):
 class Notification(models.Model):
     class Priority(models.TextChoices):
         HIGH = 'high', 'Alta'
-        MEDIUM = 'medium', 'Normal'
+        NORMAL = 'normal', 'Normal'
         LOW = 'low', 'Baja'
         
     title = models.CharField(max_length=200)
@@ -106,7 +106,7 @@ class Notification(models.Model):
         if message == "":
             errors["message"] = "Por favor ingrese un mensaje"
 
-        if priority not in [cls.Priority.HIGH, cls.Priority.MEDIUM, cls.Priority.LOW]:
+        if priority not in [cls.Priority.HIGH, cls.Priority.NORMAL, cls.Priority.LOW]:
             errors["priority"] = "Prioridad no válida"
 
         return errors
