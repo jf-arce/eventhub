@@ -73,3 +73,29 @@ class Event(models.Model):
         self.organizer = organizer or self.organizer
 
         self.save()
+
+class RefoundRequest(models.Model):
+    approved = models.BooleanField(default=False)
+    approval_date = models.DateTimeField(auto_now_add=True)
+    ticket_code = models.CharField(max_length=200)
+    reason = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_refund")
+
+
+    def __str__(self):
+        return self.ticket_code
+
+    @classmethod
+    def validate(cls, ticket_code, reason):
+        errors = {}
+
+        if ticket_code == "":
+            errors["ticket_code"] = "Por favor ingrese su codigo de ticket"
+
+        if reason == "":
+            errors["reason"] = "Por favor ingrese una razon de reembolso"
+
+        return errors
+
+
