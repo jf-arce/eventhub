@@ -129,7 +129,7 @@ def event_form(request, id=None):
 def venues(request):
     user = request.user
     
-    if not user.is_organizer:
+    if not (user.is_organizer or user.is_superuser):
         return redirect("events")
     
     venues = Venue.objects.all().order_by('name')
@@ -138,7 +138,7 @@ def venues(request):
         "app/venues/venues.html",
         {
             "venues": venues,
-            "user_is_organizer": request.user.is_organizer
+            "user_is_organizer": request.user.is_organizer or request.user.is_superuser
         },
     )
 
@@ -146,7 +146,7 @@ def venues(request):
 def venue_create(request):
     user = request.user
     
-    if not user.is_organizer:
+    if not (user.is_organizer or user.is_superuser):
         return redirect("events")
         
     if request.method == "POST":
@@ -165,7 +165,7 @@ def venue_create(request):
                 {
                     "errors": errors,
                     "data": request.POST,
-                    "user_is_organizer": request.user.is_organizer
+                    "user_is_organizer": request.user.is_organizer or request.user.is_superuser
                 },
             )
         
@@ -182,14 +182,14 @@ def venue_create(request):
     return render(
         request,
         "app/venues/add_venues.html",
-        {"user_is_organizer": request.user.is_organizer}
+        {"user_is_organizer": request.user.is_organizer or request.user.is_superuser}
     )
 
 @login_required
 def venue_delete(request, id):
     user = request.user
     
-    if not user.is_organizer:
+    if not (user.is_organizer or user.is_superuser):
         return redirect("events")
 
     if request.method == "POST":
@@ -203,7 +203,7 @@ def venue_delete(request, id):
 def venue_edit(request, id):
     user = request.user
     
-    if not user.is_organizer:
+    if not (user.is_organizer or user.is_superuser):
         return redirect("events")
         
     venue = get_object_or_404(Venue, pk=id)
@@ -225,7 +225,7 @@ def venue_edit(request, id):
                     "errors": errors,
                     "data": request.POST,
                     "venue": venue,
-                    "user_is_organizer": request.user.is_organizer
+                    "user_is_organizer": request.user.is_organizer or request.user.is_superuser
                 },
             )
         
@@ -243,6 +243,6 @@ def venue_edit(request, id):
         "app/venues/edit_venue.html",
         {
             "venue": venue,
-            "user_is_organizer": request.user.is_organizer
+            "user_is_organizer": request.user.is_organizer or request.user.is_superuser
         }
     )
