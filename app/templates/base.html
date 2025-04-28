@@ -19,14 +19,14 @@
         content="width=device-width, initial-scale=1"
     />
     <style>
-        body {
+        .landing-background {
             background: url('https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
             background-size: cover;
         }
     </style>
 </head>
 
-<body class="d-flex flex-column min-vh-100">
+<body class="d-flex flex-column min-vh-100 bg-light{% block body_class %}{% endblock %}">
     <nav class="navbar navbar-expand-md navbar-dark bg-black">
         <div class="container-fluid">
             <a class="navbar-brand ms-3" href="/">EventHub</a>

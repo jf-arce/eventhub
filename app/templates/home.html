@@ -1,5 +1,14 @@
-{% extends "base.html" %} {% block content %}
-<main class="flex-grow-1">
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .landing-background {
+        background: url('https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+        background-size: cover;
+    }
+</style>
+
+<main class="flex-grow-1 landing-background">
     <div class="container py-5">
         <div class="bg-white bg-opacity-75 rounded-4 p-5 shadow-lg text-center">
             <h1 class="display-4 fw-bold mb-4">Eventos y Entradas</h1>

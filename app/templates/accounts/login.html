@@ -1,59 +1,56 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block content %}
+<main class="flex-grow-1 landing-background">
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-lg-4 offset-lg-4 col-md-8 offset-md-2 col-12">
+                <div class="card bg-white bg-opacity-75 shadow-sm p-4">
+                    <div class="card-body">
+                        <h3 class="card-title text-center mb-4">Eventhub</h3>
+                        <form
+                            method="POST"
+                            action="/accounts/login/"
+                            class="vstack gap-3"
+                        >
+                            {% csrf_token %}
+                            <div>
+                                <label for="username" class="form-label"
+                                    >Usuario</label
+                                >
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="username"
+                                    name="username"
+                                    placeholder="Ingresá tu usuario"
+                                />
+                            </div>
+                            <div>
+                                <label for="password" class="form-label"
+                                    >Contraseña</label
+                                >
+                                <input
+                                    type="password"
+                                    class="form-control"
+                                    id="password"
+                                    name="password"
+                                    placeholder="Ingresá tu contraseña"
+                                />
+                            </div>
 
-{% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-lg-4 offset-lg-4 col-md-8 offset-md-2 col-12">
-            <div class="card  shadow-sm p-4">
-                <div class="card-body">
-                    <h3 class="card-title text-center mb-4">Eventhub</h3>
-                    <form
-                        method="POST"
-                        action="/accounts/login/"
-                        class="vstack gap-3"
-                    >
-                        {% csrf_token %}
-                        <div>
-                            <label
-                                for="username"
-                                class="form-label"
-                            >Usuario</label>
-                            <input
-                                type="text"
-                                class="form-control"
-                                id="username"
-                                name="username"
-                                placeholder="Ingresá tu usuario"
-                            >
-                        </div>
-                        <div>
-                            <label
-                                for="password"
-                                class="form-label"
-                            >Contraseña</label>
-                            <input
-                                type="password"
-                                class="form-control"
-                                id="password"
-                                name="password"
-                                placeholder="Ingresá tu contraseña"
-                            >
-                        </div>
+                            {% if error %}
+                            <p class="text-center text-danger">{{ error }}</p>
+                            {% endif %}
 
-                        {% if error %}
-                        <p class="text-center text-danger">{{ error }}</p>
-                        {% endif %}
-
-                        <div class="d-grid">
-                            <button
-                                type="submit"
-                                class="btn btn-primary"
-                            >Iniciar sesión</button>
-                        </div>
-                    </form>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    Iniciar sesión
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</main>
 {% endblock %}
