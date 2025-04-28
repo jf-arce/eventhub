@@ -18,16 +18,20 @@
         name="viewport"
         content="width=device-width, initial-scale=1"
     />
-
+    <style>
+        body {
+            background: url('https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+            background-size: cover;
+        }
+    </style>
 </head>
 
-<body>
-    <!-- Navbar solo visible si el usuario está autenticado -->
-    <nav class="navbar navbar-expand-md bg-body-tertiary">
+<body class="d-flex flex-column min-vh-100">
+    <nav class="navbar navbar-expand-md navbar-dark bg-black">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/">EventHub</a>
+            <a class="navbar-brand ms-3" href="/">EventHub</a>
 
-            <div class="hstack gap-2">
+            <div class="hstack gap-3 me-3">
                 {% if user.is_authenticated %}
                     <button
                         class="navbar-toggler"
@@ -68,7 +72,7 @@
                     <a
                         class="btn btn-sm btn-outline-primary"
                         href="{% url 'login' %}"
-                    >Ingresá</>
+                    >Ingresá</a>
                     <a
                         class="btn btn-sm btn-primary"
                         href="{% url 'register' %}"
