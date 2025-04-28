@@ -17,5 +17,5 @@ urlpatterns = [
     path("venues/", views.venues, name="venues"),
     path("venues/create/", views.venue_create, name="venue_create"),
     path("venues/<int:id>/delete/", views.venue_delete, name="venue_delete"),
-
+    path("venues/<int:id>/edit/", views.venue_edit, name="venue_edit"),
 ]

@@ -198,3 +198,51 @@ def venue_delete(request, id):
         return redirect("venues")
 
     return redirect("venues")
+
+@login_required
+def venue_edit(request, id):
+    user = request.user
+    
+    if not user.is_organizer:
+        return redirect("events")
+        
+    venue = get_object_or_404(Venue, pk=id)
+        
+    if request.method == "POST":
+        name = request.POST.get("location_name")
+        address = request.POST.get("address")
+        city = request.POST.get("city") 
+        capacity = request.POST.get("capacity")
+        contact = request.POST.get("contact")
+        
+        errors = Venue.validate(name, address, city, int(capacity), contact)
+        
+        if len(errors) > 0:
+            return render(
+                request,
+                "app/venues/edit_venue.html",
+                {
+                    "errors": errors,
+                    "data": request.POST,
+                    "venue": venue,
+                    "user_is_organizer": request.user.is_organizer
+                },
+            )
+        
+        venue.name = name
+        venue.address = address
+        venue.city = city
+        venue.capacity = capacity
+        venue.contact = contact
+        venue.save()
+        
+        return redirect("venues")
+    
+    return render(
+        request,
+        "app/venues/edit_venue.html",
+        {
+            "venue": venue,
+            "user_is_organizer": request.user.is_organizer
+        }
+    )
