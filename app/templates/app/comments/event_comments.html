@@ -1,25 +1,20 @@
 {% block content %}
-<section class="container mt-4">
+<section class="container mt-4 p-0">
     <div class="card">
-        <div class="card-header bg-light">
-            <h2 class="mb-0 fs-4">Comentarios ({{ comments|length }})</h2>
+        <div class="card-header bg-dark">
+            <h2 class="mb-0 fs-4 text-white">Comentarios ({{ comments|length }})</h2>
         </div>
         <div class="card-body">
             {% for comment in comments %}
-            <div class="comment-item mb-3 p-3 border rounded">
-                <div
-                    class="d-flex justify-content-between align-items-center mb-2"
-                >
+            <div class="comment-item mb-3 p-3 border rounded shadow-sm">
+                <div class="d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
-                        <i class="bi bi-person-circle me-2 text-primary"></i>
+                        <i class="bi bi-person-circle me-2 text-primary fs-5"></i>
                         <div>
-                            <strong>{{ comment.user.username }}</strong>
-                            <small class="text-muted d-block">
-                                {{ comment.created_at|date:"d M Y, H:i" }}
-                            </small>
+                            <strong class="d-block text-truncate" style="max-width: 200px;">{{ comment.user.username }}</strong>
+                            <small class="text-muted">{{ comment.created_at|date:"d M Y, H:i" }}</small>
                         </div>
                     </div>
-                    <!-- Icono de tres puntos -->
                     <div class="dropdown">
                         <button
                             class="btn btn-link text-dark p-0"
@@ -35,16 +30,9 @@
                             aria-labelledby="dropdownMenu{{ comment.id }}"
                         >
                             <li>
-                                {% comment %}
-                                <a
-                                    class="dropdown-item"
-                                    href="{% url 'comment_update' comment.id %}"
-                                    >Editar</a
-                                >
-                                {% endcomment %}
                                 <button
                                     type="button"
-                                    class="btn btn-primary"
+                                    class="dropdown-item"
                                     data-bs-toggle="modal"
                                     data-bs-target="#exampleModal{{ comment.id }}"
                                 >
@@ -69,7 +57,7 @@
                         </ul>
                     </div>
                 </div>
-                <h5 class="mt-2">{{ comment.title }}</h5>
+                <h6 class="fw-bold mb-1 mt-2">{{ comment.title }}</h6>
                 <p class="mb-0">{{ comment.text }}</p>
             </div>
 
@@ -106,7 +94,7 @@
             <p class="text-muted">No hay comentarios para este evento.</p>
             {% endfor %}
 
-            <div class="mt-4">
+            <div class="mt-3 p-2">
                 {% include './add_comment.html' with errors=errors form_data=form_data %}
             </div>
         </div>
