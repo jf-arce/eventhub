@@ -1,8 +1,6 @@
 {% extends 'base.html' %} {% block content %}
 <div class="container my-5">
-    <h2 class="mb-4">
-        Entradas para: {{ event.title }}
-    </h2>
+    <h2 class="mb-4">Entradas para: {{ event.title }}</h2>
 
     <table class="table">
         <thead>
@@ -32,7 +30,12 @@
                 <td>
                     <div class="hstack gap-2">
                         {% if user_is_organizer or ticket.user == user %}
-                    
+                        <a
+                            href="{% url 'edit_ticket' event_id=event.id ticket_id=ticket.id %}"
+                            class="btn btn-sm btn-outline-secondary"
+                        >
+                            <i class="bi bi-pencil" aria-hidden="true"></i>
+                        </a>
                         <form
                             action="{% url 'view_ticket' event_id=event.id %}"
                             method="POST"
@@ -63,7 +66,7 @@
                     class="text-center"
                 >
                     {% if user_is_organizer %} No hay entradas vendidas para
-                    este evento {% else %} No existen entradas para este evento
+                    este evento {% else %} No tienes entradas para este evento
                     {% endif %}
                 </td>
             </tr>

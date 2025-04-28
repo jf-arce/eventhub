@@ -1,11 +1,11 @@
 import datetime, uuid
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.contrib import messages
 
-from .models import Event, User, Ticket
+from .models import Event, Ticket, User
 
 
 def register(request):
@@ -54,10 +54,8 @@ def login_view(request):
 
     return render(request, "accounts/login.html")
 
-
 def home(request):
     return render(request, "home.html")
-
 
 @login_required
 def events(request):
@@ -67,7 +65,6 @@ def events(request):
         "app/events.html",
         {"events": events, "user_is_organizer": request.user.is_organizer},
     )
-
 
 @login_required
 def event_detail(request, id):
@@ -87,7 +84,6 @@ def event_delete(request, id):
         return redirect("events")
 
     return redirect("events")
-
 
 @login_required
 def event_form(request, id=None):
@@ -195,8 +191,35 @@ def view_ticket(request, event_id):
         'user_is_organizer': request.user.is_organizer
     })
 
-@login_required
-def edit_ticket(request, event_id):
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Event, Ticket
+
+def edit_ticket(request, event_id, ticket_id):
     event = get_object_or_404(Event, id=event_id)
-    return render(request, 'app/edit_ticket.html', {'event': event})
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    
+    if not (request.user == ticket.user or request.user == event.organizer):
+        return redirect('events')
+    
+    if request.method == 'POST':
+        ticket_type = request.POST.get('ticket_type')
+        quantity = request.POST.get('quantity')
+        
+        try:
+            quantity = int(quantity)
+            if quantity < 1:
+                raise ValueError("La cantidad debe ser mayor a 0")
+                
+            ticket.type = ticket_type
+            ticket.quantity = quantity
+            ticket.save()
+            return redirect('view_ticket', event_id=event_id)
+            
+        except ValueError:
+            pass
+    
+    return render(request, 'app/edit_ticket.html', {
+        'event': event,
+        'ticket': ticket
+    })
 
