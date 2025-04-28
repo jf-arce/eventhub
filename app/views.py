@@ -4,8 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .models import Event, User
-
+from .models import Event, User, Venue
 
 def register(request):
     if request.method == "POST":
@@ -125,3 +124,55 @@ def event_form(request, id=None):
         "app/event_form.html",
         {"event": event, "user_is_organizer": request.user.is_organizer},
     )
+
+@login_required
+def venues(request):
+    user = request.user
+    
+    if not user.is_organizer:
+        return redirect("events")
+        
+    return render(
+        request,
+        "app/venues/add_venues.html",
+        {"user_is_organizer": request.user.is_organizer},
+    )
+
+@login_required
+def venue_create(request):
+    user = request.user
+    
+    if not user.is_organizer:
+        return redirect("events")
+        
+    if request.method == "POST":
+        name = request.POST.get("location_name")
+        address = request.POST.get("address")
+        city = request.POST.get("city")
+        capacity = request.POST.get("capacity")
+        contact = request.POST.get("contact")
+        
+        errors = Venue.validate(name, address, city, int(capacity), contact)
+        
+        if len(errors) > 0:
+            return render(
+                request,
+                "app/venues/add_venues.html",
+                {
+                    "errors": errors,
+                    "data": request.POST,
+                    "user_is_organizer": request.user.is_organizer
+                },
+            )
+        
+        Venue.objects.create(
+            name=name,
+            address=address,
+            city=city,
+            capacity=int(capacity),
+            contact=contact
+        )
+        
+        return redirect("add_venues")
+    
+    return redirect("add_venues")
