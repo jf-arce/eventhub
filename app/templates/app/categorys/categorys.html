@@ -42,7 +42,7 @@
                                title="Ver detalle">
                                 <i class="bi bi-eye" aria-hidden="true"></i>
                             </a>
-                            {% if user_is_organizer %}
+                            {% if user.is_organizer or user.is_superuser %}
                                 <a href="{% url 'category_edit' category.id %}"
                                     class="btn btn-sm btn-outline-secondary"
                                     aria-label="Editar"

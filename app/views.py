@@ -174,7 +174,7 @@ def category_form(request, id=None):
     print("Llamando a category_form con ID:", id)
     user = request.user
 
-    if not user.is_organizer:
+    if not (user.is_organizer or user.is_superuser):
         return redirect("categorys")
 
     if request.method == "POST":
@@ -203,7 +203,7 @@ def category_form(request, id=None):
 @login_required
 def category_delete(request, category_id):
     user = request.user
-    if not user.is_organizer:
+    if not (user.is_organizer or user.is_superuser):
         return redirect("categorys")
 
     category = get_object_or_404(Category, pk=category_id)
