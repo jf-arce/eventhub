@@ -131,11 +131,15 @@ def venues(request):
     
     if not user.is_organizer:
         return redirect("events")
-        
+    
+    venues = Venue.objects.all().order_by('name')
     return render(
         request,
-        "app/venues/add_venues.html",
-        {"user_is_organizer": request.user.is_organizer},
+        "app/venues/venues.html",
+        {
+            "venues": venues,
+            "user_is_organizer": request.user.is_organizer
+        },
     )
 
 @login_required
@@ -173,6 +177,10 @@ def venue_create(request):
             contact=contact
         )
         
-        return redirect("add_venues")
+        return redirect("venues")
     
-    return redirect("add_venues")
+    return render(
+        request,
+        "app/venues/add_venues.html",
+        {"user_is_organizer": request.user.is_organizer}
+    )
