@@ -77,9 +77,9 @@ class Event(models.Model):
 
 class Notification(models.Model):
     class Priority(models.TextChoices):
-        HIGH = 'high', 'High'
-        MEDIUM = 'medium', 'Medium'
-        LOW = 'low', 'Low'
+        HIGH = 'high', 'Alta'
+        MEDIUM = 'medium', 'Normal'
+        LOW = 'low', 'Baja'
         
     title = models.CharField(max_length=200)
     message = models.TextField()
@@ -91,6 +91,7 @@ class Notification(models.Model):
     )
     is_read = models.BooleanField(default=False)
     users = models.ManyToManyField(User, related_name="notifications")
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="notifications")
     
     def __str__(self):
         return self.title

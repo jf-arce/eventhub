@@ -52,6 +52,19 @@
                         </ul>
                     </div>
 
+                    {% if user.is_authenticated or user.is_superuser %}    
+                    <div
+                        class="collapse navbar-collapse"
+                        id="navbar-content"
+                    >
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            <li class="nav-item">
+                                {% navbar_link 'notifications' 'Notificaciones' %}
+                            </li>
+                        </ul>
+                    </div>
+                    {% endif %}
+
                     <form
                         class="d-flex"
                         action={% url 'logout' %}
