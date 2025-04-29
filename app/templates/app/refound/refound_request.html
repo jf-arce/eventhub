@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Reembolsos{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <h1 class="mb-4">
+            {% if event.id %}
+            Solicitar Reembolso
+            {% else %}
+            Solicitar Reembolso
+            {% endif %}
+        </h1>
+        <div class="col-md-8">
+
+            <div class="card">
+                <div class="card-body">
+                    <form action="{% url 'refound_request' %}" method="POST">
+                        {% csrf_token %}
+                        <div class="vstack gap-3">
+                            <div>
+                                <label for="ticket_code" class="form-label">Código del ticket</label>
+                                <input class="form-control"
+                                       id="ticket_code"
+                                       required
+                                       type="text"
+                                       value="{{ refound_request.ticket_code }}"
+                                       name="ticket_code" />
+                            </div>
+                            <div>
+                                <label for="reason" class="form-label">Motivo de reembolso</label>
+                                <textarea
+                                    class="form-control"
+                                    id="reason"
+                                    name="reason"
+                                    rows="4"
+                                    required>{{ refound_request.reason }}</textarea>
+                            </div>
+                            <div>
+                                <button type="submit" class="btn btn-primary">Solicitar Reembolso</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    Política de Reembolsos
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2 text-success">✔ Reembolso del 100% hasta 7 días antes del evento.</li>
+                        <li class="mb-2 text-success">✔ Reembolso del 50% entre 2 y 7 días antes del evento.</li>
+                        <li class="mb-2 text-danger">✘ Sin reembolso a menos de 48 horas del evento.</li>
+                        <li class="mb-2 text-info">ℹ El reembolso se realizará al mismo método de pago utilizado en la compra.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
