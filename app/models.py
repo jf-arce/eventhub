@@ -99,18 +99,15 @@ class RefoundRequest(models.Model):
         return errors
 
     @classmethod
-    def new(cls,approved, approval_date ,ticket_code, reason, created_at, user):
+    def new(cls,ticket_code, reason, user):
         errors = RefoundRequest.validate(ticket_code, reason)
 
         if len(errors.keys()) > 0:
             return False, errors
 
         RefoundRequest.objects.create(
-            approved=approved,
-            approval_date=approval_date,
             ticket_code=ticket_code,
             reason=reason,
-            created_at=created_at,
             user=user,
         )
 
