@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .models import Event, User
+from .models import Event, User, RefoundRequest
 
 
 def register(request):
@@ -124,4 +124,47 @@ def event_form(request, id=None):
         request,
         "app/event_form.html",
         {"event": event, "user_is_organizer": request.user.is_organizer},
+    )
+
+@login_required
+def refound_request(request, id=None):
+    user = request.user
+
+    if not user.is_organizer:
+        return redirect("refound_request")
+
+    if request.method == "POST":
+        ticket_code = request.POST.get("ticket_code")
+        reason = request.POST.get("reason")
+
+        if id is None:
+            success, errors = RefoundRequest.new(ticket_code, reason, user)
+            if not success:
+                # Si hay errores, volvemos a renderizar el formulario con errores
+                return render(
+                    request,
+                    "app/refound/refound_request.html",
+                    {
+                        "errors": errors,
+                        "refound_request": {},  # Opcional: podría pasarse el form con los datos anteriores
+                        "user_is_organizer": user.is_organizer
+                    },
+                )
+        else:
+            refound_request = get_object_or_404(RefoundRequest, pk=id)
+            # Acá iría la lógica de update si querés
+
+        return redirect("events")
+
+    refound_request = {}
+    if id is not None:
+        refound_request = get_object_or_404(Event, pk=id)
+
+    return render(
+        request,
+        "app/refound/refound_request.html",
+        {
+            "refound_request": refound_request,
+            "user_is_organizer": user.is_organizer
+        },
     )
