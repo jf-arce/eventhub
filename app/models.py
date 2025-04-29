@@ -26,54 +26,6 @@ class User(AbstractUser):
 
         return errors
 
-
-class Event(models.Model):
-    title = models.CharField(max_length=200)
-    description = models.TextField()
-    scheduled_at = models.DateTimeField()
-    organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="organized_events")
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.title
-
-    @classmethod
-    def validate(cls, title, description, scheduled_at):
-        errors = {}
-
-        if title == "":
-            errors["title"] = "Por favor ingrese un titulo"
-
-        if description == "":
-            errors["description"] = "Por favor ingrese una descripcion"
-
-        return errors
-
-    @classmethod
-    def new(cls, title, description, scheduled_at, organizer):
-        errors = Event.validate(title, description, scheduled_at)
-
-        if len(errors.keys()) > 0:
-            return False, errors
-
-        Event.objects.create(
-            title=title,
-            description=description,
-            scheduled_at=scheduled_at,
-            organizer=organizer,
-        )
-
-        return True, None
-
-    def update(self, title, description, scheduled_at, organizer):
-        self.title = title or self.title
-        self.description = description or self.description
-        self.scheduled_at = scheduled_at or self.scheduled_at
-        self.organizer = organizer or self.organizer
-
-        self.save()
-
 class Venue(models.Model):
     name = models.CharField(max_length=200)
     address = models.CharField(max_length=200)
@@ -104,3 +56,58 @@ class Venue(models.Model):
             errors["contact"] = "Por favor ingrese un contacto"
 
         return errors
+
+class Event(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    scheduled_at = models.DateTimeField()
+    organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="organized_events")
+    venue = models.ForeignKey(Venue, on_delete=models.CASCADE, related_name="events")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title
+
+    @classmethod
+    def validate(cls, title, description, scheduled_at, venue):
+        errors = {}
+
+        if title == "":
+            errors["title"] = "Por favor ingrese un titulo"
+
+        if description == "":
+            errors["description"] = "Por favor ingrese una descripcion"
+        
+        if venue is None:
+            errors["venue"] = "Por favor seleccione una ubicación"
+        
+        return errors
+
+    @classmethod
+    def new(cls, title, description, scheduled_at, organizer, venue=None):
+        errors = Event.validate(title, description, scheduled_at, venue)
+
+        if len(errors.keys()) > 0:
+            return False, errors
+
+        Event.objects.create(
+            title=title,
+            description=description,
+            scheduled_at=scheduled_at,
+            organizer=organizer,
+            venue=venue,
+        )
+
+        return True, None
+
+    def update(self, title, description, scheduled_at, organizer, venue=None):
+        self.title = title or self.title
+        self.description = description or self.description
+        self.scheduled_at = scheduled_at or self.scheduled_at
+        self.organizer = organizer or self.organizer
+
+        if venue is not None:
+            self.venue = venue
+
+        self.save()

@@ -70,7 +70,7 @@ def events(request):
 @login_required
 def event_detail(request, id):
     event = get_object_or_404(Event, pk=id)
-    return render(request, "app/event_detail.html", {"event": event})
+    return render(request, "app/event_detail.html", {"event": event, "user_is_organizer": request.user.is_organizer})
 
 
 @login_required
@@ -99,7 +99,40 @@ def event_form(request, id=None):
         description = request.POST.get("description")
         date = request.POST.get("date")
         time = request.POST.get("time")
+        venue_id = request.POST.get("venue")
 
+        if not venue_id:
+            venues = Venue.objects.all().order_by('name')
+            errors = {"venue": "Por favor seleccione una ubicación"}
+            
+            if id is None:
+                return render(
+                    request,
+                    "app/event_form.html",
+                    {
+                        "event": {
+                            "title": title,
+                            "description": description,
+                            "scheduled_at": f"{date} {time}",
+                        }, 
+                        "errors": errors,
+                        "user_is_organizer": request.user.is_organizer,
+                        "venues": venues
+                    },
+                )
+            else:
+                event = get_object_or_404(Event, pk=id)
+                return render(
+                    request,
+                    "app/event_form.html",
+                    {
+                        "event": event, 
+                        "errors": errors,
+                        "user_is_organizer": request.user.is_organizer,
+                        "venues": venues
+                    },
+                )
+            
         [year, month, day] = date.split("-")
         [hour, minutes] = time.split(":")
 
@@ -107,11 +140,30 @@ def event_form(request, id=None):
             datetime.datetime(int(year), int(month), int(day), int(hour), int(minutes))
         )
 
+        venue = get_object_or_404(Venue, pk=venue_id)
+        
         if id is None:
-            Event.new(title, description, scheduled_at, request.user)
+            success, errors = Event.new(title, description, scheduled_at, request.user, venue)
+            if not success:
+                venues = Venue.objects.all().order_by('name')
+                return render(
+                    request,
+                    "app/event_form.html",
+                    {
+                        "event": {
+                            "title": title,
+                            "description": description,
+                            "scheduled_at": scheduled_at,
+                            "venue": venue,
+                        }, 
+                        "errors": errors,
+                        "user_is_organizer": request.user.is_organizer,
+                        "venues": venues
+                    },
+                )
         else:
             event = get_object_or_404(Event, pk=id)
-            event.update(title, description, scheduled_at, request.user)
+            event.update(title, description, scheduled_at, request.user, venue)
 
         return redirect("events")
 
@@ -119,10 +171,16 @@ def event_form(request, id=None):
     if id is not None:
         event = get_object_or_404(Event, pk=id)
 
+    venues = Venue.objects.all().order_by('name')
+
     return render(
         request,
         "app/event_form.html",
-        {"event": event, "user_is_organizer": request.user.is_organizer},
+        {
+            "event": event, 
+            "user_is_organizer": request.user.is_organizer,
+            "venues": venues
+        },
     )
 
 @login_required
