@@ -139,7 +139,11 @@
                             {% endfor %}
                         </div>
                         {% if form.rating.errors %}
-                            <div class="text-danger">{{ form.rating.errors }}</div>
+                            <div class="text-danger">
+                                {% for error in form.rating.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
                         {% else %}
                             <div class="small text-muted">Selecciona una calificación (1-5 estrellas)</div>
                         {% endif %}
@@ -158,14 +162,16 @@
     {% elif not user_rated and request.user != event.organizer %}
         <div class="card">
             <div class="card-body">
-                <form method="post" action="{% url 'add_rating' event.id %}">
+                <form id="rating-form" method="post" action="{% url 'add_rating' event.id %}">
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="id_title" class="form-label">Título de tu reseña *</label>
                         {{ form.title }}
-                        {% if form.title.errors %}
-                            <div class="text-danger">{{ form.title.errors }}</div>
-                        {% endif %}
+                        <div id="title-error" class="text-danger">
+                            {% for error in form.title.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Tu calificación *</label>
@@ -175,11 +181,7 @@
                                 <label for="{{ choice.id_for_label }}">&#9733;</label>
                             {% endfor %}
                         </div>
-                        {% if form.rating.errors %}
-                            <div class="text-danger">{{ form.rating.errors }}</div>
-                        {% else %}
-                            <div class="small text-muted">Selecciona una calificación (1-5 estrellas)</div>
-                        {% endif %}
+                        <div id="rating-error" class="text-danger" style="display: none;">Debes seleccionar una calificación.</div>
                     </div>
                     <div class="mb-3">
                         <label for="id_text" class="form-label">Tu reseña (opcional)</label>
@@ -188,9 +190,41 @@
                             <div class="text-danger">{{ form.text.errors }}</div>
                         {% endif %}
                     </div>
-                    <button type="submit" class="btn btn-primary">Enviar calificación</button>
+                    <button type="submit" class="btn btn-primary" onclick="validateRating(event)">Enviar calificación</button>
                 </form>
             </div>
         </div>
     {% endif %}
 </div>
+
+<script>
+    function validateRating(event) {
+        const titleInput = document.getElementById('id_title');
+        const titleError = document.getElementById('title-error');
+        const ratingInputs = document.querySelectorAll('input[name="rating"]');
+        const ratingError = document.getElementById('rating-error');
+        let ratingSelected = false;
+
+        
+        titleError.innerHTML = '';
+        ratingError.style.display = 'none';
+
+        // Cheque si el titulo esta vacio
+        if (!titleInput.value.trim()) {
+            event.preventDefault(); // Prevent form submission
+            titleError.innerHTML = 'Este campo es obligatorio.'; // Show error message
+        }
+
+        // Chequea lo mismo con la calificacion
+        ratingInputs.forEach(input => {
+            if (input.checked) {
+                ratingSelected = true;
+            }
+        });
+
+        if (!ratingSelected) {
+            event.preventDefault(); // 
+            ratingError.style.display = 'block'; 
+        }
+    }
+</script>
