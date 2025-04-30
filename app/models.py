@@ -75,12 +75,13 @@ class Event(models.Model):
         self.save()
 
 class RefoundRequest(models.Model):
-    approved = models.BooleanField(default=False)
+    approved = models.BooleanField(null=True, default=None)
     approval_date = models.DateTimeField(auto_now_add=True)
     ticket_code = models.CharField(max_length=200)
     reason = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_refund")
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="refound_event")
 
 
     def __str__(self):
@@ -99,7 +100,7 @@ class RefoundRequest(models.Model):
         return errors
 
     @classmethod
-    def new(cls,ticket_code, reason, user):
+    def new(cls,ticket_code, reason, user, event):
         errors = RefoundRequest.validate(ticket_code, reason)
 
         if len(errors.keys()) > 0:
@@ -109,6 +110,7 @@ class RefoundRequest(models.Model):
             ticket_code=ticket_code,
             reason=reason,
             user=user,
+            event=event,
         )
 
         return True, None
