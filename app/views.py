@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.contrib import messages
-from .models import Event, User, Rating, Ticket
+from .models import Event, User, Rating, Ticket, Comment
 from .forms import RatingForm 
 
 def register(request):
@@ -70,9 +70,12 @@ def event_detail(request, id):
     event = get_object_or_404(Event, id=id)
     ratings = Rating.objects.filter(event=event)
     user_rating = Rating.objects.filter(event=event, user=request.user).first()
+    comments = Comment.objects.all().filter(event=event).order_by("created_at")
+    
     user_rated = user_rating is not None
     editing = False
     form = RatingForm()
+    
     return render(
         request,
         'app/event_detail.html',
@@ -82,10 +85,11 @@ def event_detail(request, id):
             'ratings': ratings,
             'user_rated': user_rated,
             'editing': editing,
+            "comments": comments,
+            "user_is_organizer": request.user.is_organizer,
+            "user_is_admin": request.user.is_superuser,
         }
     )
-
-
 
 @login_required
 def event_delete(request, id):
@@ -174,6 +178,7 @@ def edit_rating(request, event_id):
             'editing': True,
         }
     )
+    
 @login_required
 def update_rating(request, event_id):
     event = get_object_or_404(Event, id=event_id)
@@ -309,3 +314,80 @@ def edit_ticket(request, event_id, ticket_id):
         'ticket': ticket
     })
 
+def comments(request):
+    comments = Comment.objects.all().order_by("created_at")
+    return render(
+        request,
+        "app/comments/comments.html",
+        {
+            "comments": comments, 
+        },
+    )
+    
+@login_required
+def comment_delete(request, id):
+    user = request.user
+    if not (user.is_organizer or user.is_superuser):
+        return redirect("comments")
+
+    if request.method == "POST":
+        comment = get_object_or_404(Comment, pk=id)
+        comment.delete()
+        return redirect("comments")
+
+    return redirect("comments")
+
+@login_required
+def add_comment(request, event_id):
+    user= request.user
+    
+    if request.method == "POST":
+        title = request.POST.get("title")
+        text = request.POST.get("text")
+        event = get_object_or_404(Event, pk=event_id)
+        
+        print(title, text, event)
+        
+        success, errors = Comment.new(title, text, user, event)
+
+        if not success:
+            return render(
+                request,
+                "app/event_detail.html",
+                {
+                    "event": event,
+                    "comments": Comment.objects.all().filter(event=event).order_by("created_at"),
+                    "errors": errors,
+                    "form_data": {"title": title, "text": text},
+                },
+            )
+        
+        return redirect("event_detail", event_id) 
+    
+    return redirect("event_detail", event_id)
+
+@login_required
+def comment_update(request, id):
+
+    if request.method == "POST":
+        title = request.POST.get("title")
+        text = request.POST.get("text")
+        comment = get_object_or_404(Comment, pk=id)
+        
+        comment.update(title, text)
+        
+        return redirect("event_detail", comment.event.pk)
+    
+    comment = get_object_or_404(Comment, pk=id)
+    return redirect("event_detail", comment.event.pk)
+
+@login_required
+def event_comment_delete(request, id):
+    comment = get_object_or_404(Comment, pk=id)
+
+    if request.method == "POST":
+        comment = get_object_or_404(Comment, pk=id)
+        comment.delete()
+        return redirect("event_detail", comment.event.pk)
+
+    return redirect("event_detail", comment.event.pk)

@@ -27,7 +27,6 @@ class User(AbstractUser):
 
         return errors
 
-
 class Event(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
@@ -107,7 +106,7 @@ class Ticket(models.Model):
 
         if type == "":
             errors["type"] = "Por favor ingrese el tipo de entrada"
-
+    
         return errors
     
     @classmethod
@@ -135,9 +134,52 @@ class Ticket(models.Model):
         self.type = type or self.type
 
         self.save()
+            
 
+class Comment(models.Model):
+    title = models.CharField(max_length=200)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="user_comments")
+    event = models.ForeignKey(Event, on_delete=models.PROTECT, related_name="event_comments")
+    
+    def __str__(self):
+        return self.title
 
+    @classmethod
+    def validate(cls, title, text):
+        errors = {}
 
+        if title == "":
+            errors["title"] = "Por favor ingrese un titulo"
+
+        if text == "":
+            errors["text"] = "Por favor ingrese un comentario"
+
+        return errors
+    
+    @classmethod
+    def new(cls, title, text, user, event):
+        error = cls.validate(title, text)
+        
+        if len(error.keys()) > 0:
+            return False, error
+        
+        cls.objects.create(
+            title=title,
+            text=text,
+            user=user,
+            event=event
+        )
+
+        return True, None
+    
+    def update(self, title, text):
+        self.title = title or self.title
+        self.text = text or self.text
+        
+        self.save()
+    
 
 class Rating(models.Model):
     event = models.ForeignKey("Event", on_delete=models.CASCADE, related_name="ratings")
@@ -186,3 +228,4 @@ class Rating(models.Model):
             return True, rating_instance
         except cls.DoesNotExist:
             return False, "No se encontró la calificación para actualizar."
+    
