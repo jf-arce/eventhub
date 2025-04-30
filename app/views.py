@@ -220,5 +220,5 @@ def category_delete(request, category_id):
 
 @login_required
 def category_detail(request, id):
-    category = get_object_or_404(Event, pk=id)
+    category = get_object_or_404(Category, pk=id)
     return render(request, "app/categorys/category_detail.html", {"category": category})
