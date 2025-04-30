@@ -25,5 +25,10 @@ urlpatterns = [
     path("comments/<int:id>/delete/", views.comment_delete, name="comment_delete"),
     path("comments/<int:event_id>/addComment/", views.add_comment, name="add_comment"),
     path('comments/<int:id>/update', views.comment_update, name='comment_update'),
-    path('events/comments/<int:id>/delete', views.event_comment_delete, name='event_comment_delete')
+    path('events/comments/<int:id>/delete', views.event_comment_delete, name='event_comment_delete'),
+    path("categorys/", views.categorys, name="categorys"),
+    path("category/create/", views.category_form, name="category_form"),
+    path("categorys/<int:id>/edit/", views.category_form, name="category_edit"),
+    path("category/delete/<int:category_id>/", views.category_delete, name="category_delete"),
+    path("category/<int:id>/", views.category_detail, name="category_detail"),
 ]
