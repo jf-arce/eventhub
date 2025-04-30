@@ -27,6 +27,36 @@ class User(AbstractUser):
 
         return errors
 
+class Venue(models.Model):
+    name = models.CharField(max_length=200)
+    address = models.CharField(max_length=200)
+    city = models.CharField(max_length=200)
+    capacity = models.IntegerField()
+    contact = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.name
+    
+    @classmethod
+    def validate(cls, name, address, city, capacity, contact):
+        errors = {}
+
+        if name == "":
+            errors["name"] = "Por favor ingrese un nombre"
+
+        if address == "":
+            errors["address"] = "Por favor ingrese una direccion"
+
+        if city == "":
+            errors["city"] = "Por favor ingrese una ciudad"
+
+        if capacity <= 0:
+            errors["capacity"] = "La capacidad debe ser mayor a 0"
+
+        if contact == "":
+            errors["contact"] = "Por favor ingrese un contacto"
+
+        return errors
 
 class Category (models.Model):
     name = models.CharField(max_length=200)
@@ -74,6 +104,7 @@ class Event(models.Model):
     description = models.TextField()
     scheduled_at = models.DateTimeField()
     organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="organized_events")
+    venue = models.ForeignKey(Venue, on_delete=models.CASCADE, related_name="events")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="category_event")
@@ -82,7 +113,7 @@ class Event(models.Model):
         return self.title
 
     @classmethod
-    def validate(cls, title, description, scheduled_at):
+    def validate(cls, title, description, scheduled_at, venue):
         errors = {}
 
         if title == "":
@@ -90,12 +121,15 @@ class Event(models.Model):
 
         if description == "":
             errors["description"] = "Por favor ingrese una descripcion"
-
+        
+        if venue is None:
+            errors["venue"] = "Por favor seleccione una ubicación"
+        
         return errors
 
     @classmethod
-    def new(cls, title, description, scheduled_at, organizer, category):
-        errors = Event.validate(title, description, scheduled_at)
+    def new(cls, title, description, scheduled_at, organizer, category, venue=None):
+        errors = Event.validate(title, description, scheduled_at, venue)
 
         if len(errors.keys()) > 0:
             return False, errors
@@ -106,18 +140,20 @@ class Event(models.Model):
             scheduled_at=scheduled_at,
             organizer=organizer,
             category=category,
+            venue=venue,
         )
 
         return True, None
 
-    def update(self, title, description, scheduled_at, organizer):
+    def update(self, title, description, scheduled_at, organizer, venue=None):
         self.title = title or self.title
         self.description = description or self.description
         self.scheduled_at = scheduled_at or self.scheduled_at
         self.organizer = organizer or self.organizer
+        if venue is not None:
+            self.venue = venue
 
         self.save()
-
 
 class Ticket(models.Model):
     TICKET_TYPES = [
@@ -272,4 +308,3 @@ class Rating(models.Model):
             return True, rating_instance
         except cls.DoesNotExist:
             return False, "No se encontró la calificación para actualizar."
-    

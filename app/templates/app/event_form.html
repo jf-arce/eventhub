@@ -14,44 +14,63 @@
 
             <div class="card">
                 <div class="card-body">
-                    <form action="{% url 'event_form' %}" method="POST">
+                    {% if errors %}
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            {% for field, error in errors.items %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
+                    <form action="{% if event.id %}{% url 'event_edit' event.id %}{% else %}{% url 'event_form' %}{% endif %}" method="POST">
                         {% csrf_token %}
                         <div class="vstack gap-3">
                             <div>
-                                <label for="title" class="form-label">Título del Evento</label>
+                                <label for="title" class="form-label">Título del Evento *</label>
                                 <input class="form-control"
                                     id="title"
-                                    required=""
+                                    required
                                     type="text"
                                     value="{{ event.title }}"
                                     name="title" />
                             </div>
                             <div>
-                                <label for="description" class="form-label">Descripción</label>
+                                <label for="description" class="form-label">Descripción *</label>
                                 <textarea
                                     class="form-control"
                                     id="description"
                                     name="description"
                                     rows="4"
-                                    required="">{{ event.description }}</textarea>
+                                    required>{{ event.description }}</textarea>
+                            </div>
+                            <div>
+                                <label for="venue" class="form-label">Ubicación *</label>
+                                <select class="form-select" id="venue" name="venue" required>
+                                    <option value="">-- Seleccionar ubicación --</option>
+                                    {% for venue in venues %}
+                                    <option value="{{ venue.id }}" {% if event.venue and event.venue.id == venue.id %}selected{% endif %}>{{ venue.name }} ({{ venue.city }})</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <label for="date" class="form-label">Fecha</label>
+                                    <label for="date" class="form-label">Fecha *</label>
                                     <input
                                         class="form-control"
                                         id="date"
-                                        required=""
+                                        required
                                         type="date"
                                         value="{{ event.scheduled_at|date:'Y-m-d'}}"
                                         name="date" />
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="time" class="form-label">Hora</label>
+                                    <label for="time" class="form-label">Hora *</label>
                                     <input
                                         class="form-control"
                                         id="time"
-                                        required=""
+                                        required
                                         type="time"
                                         value="{{ event.scheduled_at|date:'g:i'}}"
                                         name="time" />

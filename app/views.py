@@ -4,10 +4,9 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.contrib import messages
-from .models import Event, User, Rating, Ticket, Comment, Category
+from .models import Event, User, Rating, Ticket, Comment, Category, Venue
 from .forms import RatingForm 
 from django.db.models import Count
-
 
 def register(request):
     if request.method == "POST":
@@ -124,6 +123,7 @@ def event_form(request, id=None):
         date = request.POST.get("date")
         time = request.POST.get("time")
         category_id = request.POST.get("category")
+        venue_id = request.POST.get("venue")
 
         if not title or not description or not date or not time or not category_id:
             error = "Todos los campos son obligatorios."
@@ -138,6 +138,38 @@ def event_form(request, id=None):
                 },
             )
 
+        if not venue_id:
+            venues = Venue.objects.all().order_by('name')
+            errors = {"venue": "Por favor seleccione una ubicación"}
+            
+            if id is None:
+                return render(
+                    request,
+                    "app/event_form.html",
+                    {
+                        "event": {
+                            "title": title,
+                            "description": description,
+                            "scheduled_at": f"{date} {time}",
+                        }, 
+                        "errors": errors,
+                        "user_is_organizer": request.user.is_organizer,
+                        "venues": venues
+                    },
+                )
+            else:
+                event = get_object_or_404(Event, pk=id)
+                return render(
+                    request,
+                    "app/event_form.html",
+                    {
+                        "event": event, 
+                        "errors": errors,
+                        "user_is_organizer": request.user.is_organizer,
+                        "venues": venues
+                    },
+                )
+            
         [year, month, day] = date.split("-")
         [hour, minutes] = time.split(":")
         scheduled_at = timezone.make_aware(
@@ -145,13 +177,31 @@ def event_form(request, id=None):
         )
 
         category = get_object_or_404(Category, pk=category_id)
-
+        venue = get_object_or_404(Venue, pk=venue_id)
+        
         if id is None:
-            success, errors = Event.new(title, description, scheduled_at, request.user, category)
+            success, errors = Event.new(title, description, scheduled_at, request.user, category, venue)
             if not success:
-                error = errors 
+                venues = Venue.objects.all().order_by('name')
+                return render(
+                    request,
+                    "app/event_form.html",
+                    {
+                        "event": {
+                            "title": title,
+                            "description": description,
+                            "scheduled_at": scheduled_at,
+                            "venue": venue,
+                        }, 
+                        "errors": errors,
+                        "user_is_organizer": request.user.is_organizer,
+                        "venues": venues,
+                        "categorys": Category.objects.filter(is_active=True),
+                    },
+                )
         else:
             event = get_object_or_404(Event, pk=id)
+            event.update(title, description, scheduled_at, request.user, venue)
 
         return redirect("events")
 
@@ -160,6 +210,7 @@ def event_form(request, id=None):
         event = get_object_or_404(Event, pk=id)
 
     categorys = Category.objects.filter(is_active=True)
+    venues = Venue.objects.all().order_by('name')
 
     return render(
         request,
@@ -169,6 +220,7 @@ def event_form(request, id=None):
             "user_is_organizer": request.user.is_organizer,
             "categorys": categorys,
             "error": error,
+            "venues": venues
         },
     )
 
@@ -488,3 +540,123 @@ def category_delete(request, category_id):
 def category_detail(request, id):
     category = get_object_or_404(Category, pk=id)
     return render(request, "app/categorys/category_detail.html", {"category": category})
+def venues(request):
+    user = request.user
+    
+    if not (user.is_organizer or user.is_superuser):
+        return redirect("events")
+    
+    venues = Venue.objects.all().order_by('name')
+    return render(
+        request,
+        "app/venues/venues.html",
+        {
+            "venues": venues,
+            "user_is_organizer": request.user.is_organizer or request.user.is_superuser
+        },
+    )
+
+@login_required
+def venue_create(request):
+    user = request.user
+    
+    if not (user.is_organizer or user.is_superuser):
+        return redirect("events")
+        
+    if request.method == "POST":
+        name = request.POST.get("location_name")
+        address = request.POST.get("address")
+        city = request.POST.get("city")
+        capacity = request.POST.get("capacity")
+        contact = request.POST.get("contact")
+        
+        errors = Venue.validate(name, address, city, int(capacity), contact)
+        
+        if len(errors) > 0:
+            return render(
+                request,
+                "app/venues/add_venues.html",
+                {
+                    "errors": errors,
+                    "data": request.POST,
+                    "user_is_organizer": request.user.is_organizer or request.user.is_superuser
+                },
+            )
+        
+        Venue.objects.create(
+            name=name,
+            address=address,
+            city=city,
+            capacity=int(capacity),
+            contact=contact
+        )
+        
+        return redirect("venues")
+    
+    return render(
+        request,
+        "app/venues/add_venues.html",
+        {"user_is_organizer": request.user.is_organizer or request.user.is_superuser}
+    )
+
+@login_required
+def venue_delete(request, id):
+    user = request.user
+    
+    if not (user.is_organizer or user.is_superuser):
+        return redirect("events")
+
+    if request.method == "POST":
+        venue = get_object_or_404(Venue, pk=id)
+        venue.delete()
+        return redirect("venues")
+
+    return redirect("venues")
+
+@login_required
+def venue_edit(request, id):
+    user = request.user
+    
+    if not (user.is_organizer or user.is_superuser):
+        return redirect("events")
+        
+    venue = get_object_or_404(Venue, pk=id)
+        
+    if request.method == "POST":
+        name = request.POST.get("location_name")
+        address = request.POST.get("address")
+        city = request.POST.get("city") 
+        capacity = request.POST.get("capacity")
+        contact = request.POST.get("contact")
+        
+        errors = Venue.validate(name, address, city, int(capacity), contact)
+        
+        if len(errors) > 0:
+            return render(
+                request,
+                "app/venues/edit_venue.html",
+                {
+                    "errors": errors,
+                    "data": request.POST,
+                    "venue": venue,
+                    "user_is_organizer": request.user.is_organizer or request.user.is_superuser
+                },
+            )
+        
+        venue.name = name
+        venue.address = address
+        venue.city = city
+        venue.capacity = capacity
+        venue.contact = contact
+        venue.save()
+        
+        return redirect("venues")
+    
+    return render(
+        request,
+        "app/venues/edit_venue.html",
+        {
+            "venue": venue,
+            "user_is_organizer": request.user.is_organizer or request.user.is_superuser
+        }
+    )

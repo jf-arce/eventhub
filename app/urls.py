@@ -2,8 +2,6 @@ from django.contrib.auth.views import LogoutView
 from django.urls import path
 from . import views
 
-from . import views
-
 urlpatterns = [
     path("", views.home, name="home"),
     path("accounts/register/", views.register, name="register"),
@@ -31,4 +29,8 @@ urlpatterns = [
     path("categorys/<int:id>/edit/", views.category_form, name="category_edit"),
     path("category/delete/<int:category_id>/", views.category_delete, name="category_delete"),
     path("category/<int:id>/", views.category_detail, name="category_detail"),
+    path("venues/", views.venues, name="venues"),
+    path("venues/create/", views.venue_create, name="venue_create"),
+    path("venues/<int:id>/delete/", views.venue_delete, name="venue_delete"),
+    path("venues/<int:id>/edit/", views.venue_edit, name="venue_edit"),
 ]
