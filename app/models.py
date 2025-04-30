@@ -76,6 +76,68 @@ class Event(models.Model):
         self.save()
 
 
+class Ticket(models.Model):
+    TICKET_TYPES = [
+        ("GENERAL", "GENERAL"),
+        ("VIP", "VIP"),
+    ]
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="tickets")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tickets")
+    buy_date = models.DateField()
+    ticket_code = models.CharField(max_length=100, unique=True)
+    quantity = models.IntegerField()
+    type = models.CharField(max_length=10, choices=TICKET_TYPES)
+
+    def __str__(self):
+        return self.ticket_code
+    
+    @classmethod
+    def validate(cls, quantity, type):
+        errors = {}
+
+        if quantity == "":
+            errors["quantity"] = "Por favor ingrese la cantidad de entradas"
+        else:
+            try:
+                quantity = int(quantity)
+                if quantity <= 0:
+                    errors["quantity"] = "La cantidad de entradas debe ser mayor a 0"
+            except ValueError:
+                errors["quantity"] = "La cantidad de entradas debe ser un número válido"
+
+        if type == "":
+            errors["type"] = "Por favor ingrese el tipo de entrada"
+
+        return errors
+    
+    @classmethod
+    def new(cls, buy_date, ticket_code, quantity, type, event, user):
+        errors = Ticket.validate(quantity, type)
+
+        if len(errors.keys()) > 0:
+            return False, errors
+
+        Ticket.objects.create(
+            buy_date=buy_date,
+            ticket_code=ticket_code,
+            quantity=quantity,
+            type=type,
+            event=event,
+            user=user
+        )
+
+        return True, None
+
+    def update(self, buy_date, ticket_code, quantity, type):
+        self.buy_date = buy_date or self.buy_date
+        self.ticket_code = ticket_code or self.ticket_code
+        self.quantity = quantity or self.quantity
+        self.type = type or self.type
+
+        self.save()
+
+
+
 
 class Rating(models.Model):
     event = models.ForeignKey("Event", on_delete=models.CASCADE, related_name="ratings")

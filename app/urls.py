@@ -1,5 +1,6 @@
 from django.contrib.auth.views import LogoutView
 from django.urls import path
+from . import views
 
 from . import views
 
@@ -13,9 +14,11 @@ urlpatterns = [
     path("events/<int:id>/edit/", views.event_form, name="event_edit"),
     path("events/<int:id>/", views.event_detail, name="event_detail"),
     path("events/<int:id>/delete/", views.event_delete, name="event_delete"),
+    path('events/<int:event_id>/purchase/', views.purchase_ticket, name='purchase_ticket'),
+    path('events/<int:event_id>/viewTickets/', views.view_ticket, name='view_ticket'),
+    path('events/<int:event_id>/edit_ticket/<int:ticket_id>/', views.edit_ticket, name='edit_ticket'),
     path("events/<int:event_id>/rating/add/", views.add_rating, name="add_rating"),
     path("events/<int:event_id>/rating/edit/", views.edit_rating, name="edit_rating"),
     path("events/<int:event_id>/rating/update/", views.update_rating, name="update_rating"),
     path("events/<int:event_id>/rating/delete/", views.delete_rating, name="delete_rating")
 ]
-
