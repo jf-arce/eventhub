@@ -29,13 +29,15 @@
                 <td>{{ ticket.quantity }}</td>
                 <td>
                     <div class="hstack gap-2">
-                        {% if user_is_organizer or ticket.user == user %}
+                        {% if ticket.user == user %}
                         <a
                             href="{% url 'edit_ticket' event_id=event.id ticket_id=ticket.id %}"
                             class="btn btn-sm btn-outline-secondary"
                         >
                             <i class="bi bi-pencil" aria-hidden="true"></i>
                         </a>
+                        {% endif %}
+                        {% if user_is_organizer or ticket.user == user %}
                         <form
                             action="{% url 'view_ticket' event_id=event.id %}"
                             method="POST"
