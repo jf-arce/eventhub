@@ -1,0 +1,259 @@
+{% extends 'base.html' %} 
+{% block content %}
+<div class="container my-5">
+    <div class="row ">
+        <div class="col-md-8 ">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Comprar Entrada</h5>
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title">{{ event.title }}</h3>
+                    <p class="card-text">{{ event.date }}</p>
+                    <p class="card-text">{{ venue.name }}</p>
+                    <p class="card-text">{{ venue.contact }}</p>
+
+                    <form method="POST" action="{% url 'purchase_ticket' event.id %}" id="purchaseForm" onsubmit="handleSubmit(event)">
+                        {% csrf_token %}
+                        <div class="m-1">
+                            <label for="cantidad" class="form-label"
+                                >Cantidad de entradas</label
+                            >
+                            <div class="input-group" style="max-width: 100%">
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    onclick="decrement()"
+                                >
+                                    −
+                                </button>
+                                <input
+                                    type="number"
+                                    name="cantidad"
+                                    id="cantidad"
+                                    value="1"
+                                    min="1"
+                                    class="form-control text-center"
+                                />
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    onclick="increment()"
+                                >
+                                    +
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                        <div class="m-3 mt-1">
+                            <label for="tipoEntrada" class="form-label"
+                                >Tipo de entrada</label
+                            >
+                            <select
+                                class="form-select"
+                                id="tipoEntrada"
+                                name="tipoEntrada"
+                            >
+                                <option selected>Entrada General</option>
+                                <option>Entrada VIP</option>
+                            </select>
+                        </div>
+
+                        <h5 class="m-3">Método de pago</h5>
+
+                        <div class="card p-3 bg-light mt-1 m-3 ">
+                            <div class="mb-3">
+                                <label for="numeroTarjeta" class="form-label"
+                                    >Número de tarjeta</label
+                                >
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="numeroTarjeta"
+                                    placeholder="1234 5678 9012 3456"
+                                required
+                                    />
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label
+                                        for="fechaExpiracion"
+                                        class="form-label"
+                                        required
+                                        >Fecha de expiración</label
+                                    >
+                                    <input
+                                        type="date"
+                                        class="form-control"
+                                        id="fechaExpiracion"
+                                        placeholder="MM/AA"
+                                        required
+                                        />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="cvv" class="form-label"
+                                        >CVV</label
+                                    >
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="cvv"
+                                        placeholder="123"
+                                        required
+                                        />
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="nombreTarjeta" class="form-label"
+                                    >Nombre en la tarjeta</label
+                                >
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="nombreTarjeta"
+                                    placeholder="Juan Pérez"
+                                    required
+                                    />
+                            </div>
+                        </div>
+                        <div class="m-3">
+                            <div class="form-check ">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    value=""
+                                    id="terminos"
+                                    required
+                                />
+                                <label class="form-check-label" for="terminos">
+                                    Acepto los
+                                    <a class="text-decoration-none" href="#">términos y condiciones</a> y la
+                                    <a class="text-decoration-none" href="#">política de privacidad</a>.
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="m-3 mt-1">
+
+                            <button type="submit" class="btn btn-primary w-100">
+                                Confirmar compra
+                            </button>
+                        </div>
+                    </form>
+
+                    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+                    <script>
+                        function handleSubmit(event) {
+                            event.preventDefault();
+                            
+                            Swal.fire({
+                                title: 'Procesando pago...',
+                                text: 'Por favor espere',
+                                allowOutsideClick: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                }
+                            });
+
+                            setTimeout(() => {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: '¡Pago Exitoso!',
+                                    text: 'Se ha realizado el pago de manera exitosa',
+                                    confirmButtonText: 'OK'
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        document.getElementById('purchaseForm').submit();
+                                    }
+                                });
+                            }, 2000);
+                        }
+
+                        function increment() {
+                            const input = document.getElementById("cantidad");
+                            input.value = parseInt(input.value || 0) + 1;
+                        }
+
+                        function decrement() {
+                            const input = document.getElementById("cantidad");
+                            if (parseInt(input.value) > 1) {
+                                input.value = parseInt(input.value) - 1;
+                            }
+                        }
+                    </script>
+                </div>
+            </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+
+                <div class="card-header">
+                    <h5 class="mb-0">Resumen de compra</h5>
+                </div>
+                <div class="card-body">
+                    <p>Precio por entrada:</p>
+                    <p class="d-flex justify-content-between">
+                        <span>Cantidad de entradas:</span>
+                        <span id="cantidadResumen">1</span>
+                    </p>                    
+                    <p>Subtotal: </p>
+                    <p>Impuestos (10%):</p>
+                    <div style="height: 1px; background-color: gray; width: 100%;"></div>
+                    <p class="mt-2"><strong>Total: </strong></p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">Información importante</h5>
+                </div>
+                <div class="card-body">
+                    <p class="d-flex align-items-center gap-2">
+                        <i class="bi bi-info-circle text-primary"></i>
+                        <span>Las entradas son personales e instansferibles</span>
+                    </p>
+                    <p class="d-flex align-items-center gap-2">
+                        <i class="bi bi-info-circle text-primary"></i>
+                        <span>Puedes solicitar un reembolso hasta 48 horas antes del evento</span>
+                    </p>
+                    <p class="d-flex align-items-center gap-2">
+                        <i class="bi bi-info-circle text-primary"></i>
+                        <span>Recibirás tu entrada en tu correo electrónico</span>
+                    </p>
+                    <p class="d-flex align-items-center gap-2">
+                        <i class="bi bi-info-circle text-primary"></i>
+                        <span>Presenta tu entrada digital o impresa el dia del evento</span>
+                    </p>
+                </div>
+            </div>
+            <script>
+                function actualizarResumen() {
+                    const cantidad = document.getElementById("cantidad").value;
+                    document.getElementById("cantidadResumen").textContent = cantidad;
+                }
+            
+                function increment() {
+                    const input = document.getElementById("cantidad");
+                    input.value = parseInt(input.value || 0) + 1;
+                    actualizarResumen();
+                }
+            
+                function decrement() {
+                    const input = document.getElementById("cantidad");
+                    if (parseInt(input.value) > 1) {
+                        input.value = parseInt(input.value) - 1;
+                        actualizarResumen();
+                    }
+                }
+            
+                document.getElementById("cantidad").addEventListener("change", actualizarResumen);
+                
+                actualizarResumen();
+            </script>
+        </div>
+    </div>
+</div>
+{% endblock %}
