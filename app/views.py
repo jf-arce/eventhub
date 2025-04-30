@@ -239,3 +239,31 @@ def notification_form(request, id=None):
             "priority": Notification.Priority,
         },
     )
+    
+def notification_update(request, id):
+    user = request.user
+    
+    if not (user.is_organizer or user.is_superuser):
+        return redirect("events")
+    
+    if request.method == "POST":
+        title = request.POST.get("title")
+        message = request.POST.get("message")
+        priority = request.POST.get("priority")
+
+        Notification.validate(title, message, priority)
+        
+        notification = get_object_or_404(Notification, pk=id)
+        
+        notification.title = title or notification.title
+        notification.message = message or notification.message
+        notification.priority = priority or notification.priority
+
+        notification.save()
+        
+        return redirect("notifications")
+
+    return redirect("notifications")
+        
+    
+    
