@@ -129,42 +129,59 @@ def event_form(request, id=None):
 @login_required
 def refound_request(request, id=None):
     user = request.user
-
-    if not user.is_organizer:
-        return redirect("refound_request")
+    errors = {}
+    organizer_events = None  # Inicializamos organizer_events fuera del bloque POST
 
     if request.method == "POST":
         ticket_code = request.POST.get("ticket_code")
         reason = request.POST.get("reason")
 
         if id is None:
-            success, errors = RefoundRequest.new(ticket_code, reason, user)
+            event_id = request.POST.get("event")
+            if event_id:
+                try:
+                    event = Event.objects.get(pk=event_id)
+                    success, errors = RefoundRequest.new(ticket_code, reason, user, event) # Ahora pasamos el 'event'
+                except Event.DoesNotExist:
+                    errors["event"] = "El evento seleccionado no es válido."
+                    success = False
+            else:
+                errors["event"] = "Por favor, selecciona el evento del ticket."
+                success = False
+
             if not success:
-                # Si hay errores, volvemos a renderizar el formulario con errores
                 return render(
                     request,
                     "app/refound/refound_request.html",
                     {
                         "errors": errors,
-                        "refound_request": {},  # Opcional: podría pasarse el form con los datos anteriores
-                        "user_is_organizer": user.is_organizer
+                        "refound_request": {},
+                        "user_is_organizer": user.is_organizer,
+                        "organizer_events": organizer_events,
                     },
                 )
         else:
-            refound_request = get_object_or_404(RefoundRequest, pk=id)
-            # Acá iría la lógica de update si querés
+            organizer_events = RefoundRequest.objects.filter(event__organizer=user) # Filtra directamente por el organizador del evento
+            refound_request_list = RefoundRequest.objects.all() # Esto parece innecesario aquí, ¿quizás querías otra cosa?
 
-        return redirect("events")
+        return redirect("events") # Rediriges después del POST, así que el render de abajo se ejecutará en una petición GET posterior
 
-    refound_request = {}
+    refound_request_single = {}
     if id is not None:
-        refound_request = get_object_or_404(Event, pk=id)
+        refound_request_single = get_object_or_404(Event, pk=id)
+
+    if user.is_organizer:
+        organizer_events = RefoundRequest.objects.filter(event__organizer=user) # Obtener las solicitudes para los eventos del organizador
+    else:
+        organizer_events = None # Aseguramos que sea None para usuarios no organizadores
 
     return render(
         request,
         "app/refound/refound_request.html",
         {
-            "refound_request": refound_request,
-            "user_is_organizer": user.is_organizer
+            "refound_request": refound_request_single,
+            "user_is_organizer": user.is_organizer,
+            "organizer_events": organizer_events,
         },
     )
+
