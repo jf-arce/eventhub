@@ -13,8 +13,7 @@
                     <p class="card-text">{{ venue.name }}</p>
                     <p class="card-text">{{ venue.contact }}</p>
 
-                    <form method="POST" action="{% url 'purchase_ticket' event.id %}" id="purchaseForm" onsubmit="handleSubmit(event)">
-                        {% csrf_token %}
+                    <form method="POST" action="{% url 'purchase_ticket' event.id %}" id="purchaseForm">                        {% csrf_token %}
                         <div class="m-1">
                             <label for="cantidad" class="form-label"
                                 >Cantidad de entradas</label
@@ -70,6 +69,7 @@
                                     type="text"
                                     class="form-control"
                                     id="numeroTarjeta"
+                                    maxlength="16"
                                     placeholder="1234 5678 9012 3456"
                                 required
                                     />
@@ -99,6 +99,7 @@
                                         type="text"
                                         class="form-control"
                                         id="cvv"
+                                        maxlength="3"
                                         placeholder="123"
                                         required
                                         />
@@ -183,6 +184,29 @@
                                 input.value = parseInt(input.value) - 1;
                             }
                         }
+
+                        function validarFormulario(event) {
+                            event.preventDefault();
+                            const numeroTarjeta = document.getElementById('numeroTarjeta').value.replace(/\s/g, '');
+                            if (!/^\d{16}$/.test(numeroTarjeta)) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'El número de tarjeta debe tener exactamente 16 dígitos'
+                                });
+                                return false;
+                            }
+                    
+                            const cvv = document.getElementById('cvv').value;
+                            if (!/^\d{3}$/.test(cvv)) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'El CVV debe tener exactamente 3 dígitos'
+                                });
+                                return false;
+                            }
+
                     </script>
                 </div>
             </div>
