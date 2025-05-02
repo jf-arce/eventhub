@@ -740,19 +740,19 @@ def refound_request(request, id=None):
 @login_required
 def refound_delete(request, refound_id):
     user = request.user
-    if not (user.is_organizer or user.is_superuser):
-        return redirect("refound_request")
+    if(user.is_organizer or user.is_superuser):
+        return redirect("refounds")
 
     refound_request = get_object_or_404(RefoundRequest, pk=refound_id)
 
     if request.method == "POST":
         refound_request.delete()
-        return redirect("refound_request")
+        return redirect("refounds")
     
     return render(
         request,
-        "app/refound/refound_request.html",
-        {"refound_request": refound_request}
+        "app/refound/refounds.html",
+        {"refounds": refounds}
     )
 
 @login_required
@@ -789,3 +789,18 @@ def refounds(request):
             "refounds_by_user": refounds_by_user,
         },
     )
+
+@login_required
+def refound_edit(request, id):
+
+    if request.method == "POST":
+        reason = request.POST.get("reason")
+        refound = get_object_or_404(RefoundRequest, pk=id)
+        
+        refound.update(reason)
+        
+        return redirect("refounds")
+    
+    comment = get_object_or_404(RefoundRequest, pk=id)
+    return redirect("refounds")
+

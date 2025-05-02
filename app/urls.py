@@ -36,4 +36,7 @@ urlpatterns = [
     path("refound/request/", views.refound_request, name="refound_request"),
     path("refound/<int:refound_id>/<str:action>/", views.accept_reject_refound_request, name='accept_reject_refound_request'),
     path("refound/", views.refounds, name='refounds'),
+    path("refound/delete/<int:refound_id>/", views.refound_delete, name="refound_delete"),
+    path('refound/<int:id>/update', views.refound_edit, name='refound_edit'),
+
 ]
