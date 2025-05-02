@@ -160,40 +160,46 @@
             </div>
         </div>
     {% elif not user_rated and request.user != event.organizer %}
-        <div class="card">
-            <div class="card-body">
-                <form id="rating-form" method="post" action="{% url 'add_rating' event.id %}">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="id_title" class="form-label">Título de tu reseña *</label>
-                        {{ form.title }}
-                        <div id="title-error" class="text-danger">
-                            {% for error in form.title.errors %}
-                                {{ error }}
-                            {% endfor %}
+        {% if user_has_ticket %}
+            <div class="card">
+                <div class="card-body">
+                    <form id="rating-form" method="post" action="{% url 'add_rating' event.id %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="id_title" class="form-label">Título de tu reseña *</label>
+                            {{ form.title }}
+                            <div id="title-error" class="text-danger">
+                                {% for error in form.title.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Tu calificación *</label>
-                        <div class="rating">
-                            {% for choice in form.rating %}
-                                {{ choice.tag }}
-                                <label for="{{ choice.id_for_label }}">&#9733;</label>
-                            {% endfor %}
+                        <div class="mb-3">
+                            <label class="form-label">Tu calificación *</label>
+                            <div class="rating">
+                                {% for choice in form.rating %}
+                                    {{ choice.tag }}
+                                    <label for="{{ choice.id_for_label }}">&#9733;</label>
+                                {% endfor %}
+                            </div>
+                            <div id="rating-error" class="text-danger" style="display: none;">Debes seleccionar una calificación.</div>
                         </div>
-                        <div id="rating-error" class="text-danger" style="display: none;">Debes seleccionar una calificación.</div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="id_text" class="form-label">Tu reseña (opcional)</label>
-                        {{ form.text }}
-                        {% if form.text.errors %}
-                            <div class="text-danger">{{ form.text.errors }}</div>
-                        {% endif %}
-                    </div>
-                    <button type="submit" class="btn btn-primary" onclick="validateRating(event)">Enviar calificación</button>
-                </form>
+                        <div class="mb-3">
+                            <label for="id_text" class="form-label">Tu reseña (opcional)</label>
+                            {{ form.text }}
+                            {% if form.text.errors %}
+                                <div class="text-danger">{{ form.text.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-primary" onclick="validateRating(event)">Enviar calificación</button>
+                    </form>
+                </div>
             </div>
-        </div>
+        {% else %}
+            <div class="alert alert-warning mt-4">
+                Debes comprar una entrada para poder calificar este evento.
+            </div>
+        {% endif %}
     {% endif %}
 </div>
 

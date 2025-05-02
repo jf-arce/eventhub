@@ -73,6 +73,7 @@ def event_detail(request, id):
     user_rated = user_rating is not None
     editing = False
     form = RatingForm()
+    user_has_ticket = Ticket.objects.filter(event=event, user=request.user).exists()
     return render(
         request,
         'app/event_detail.html',
@@ -82,10 +83,9 @@ def event_detail(request, id):
             'ratings': ratings,
             'user_rated': user_rated,
             'editing': editing,
+            'user_has_ticket': user_has_ticket,  
         }
     )
-
-
 
 @login_required
 def event_delete(request, id):
