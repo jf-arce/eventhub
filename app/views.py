@@ -676,48 +676,56 @@ def refound_request(request, id=None):
     user = request.user
     errors = {}
     organizer_events = None
+    refound_request_single = {}
+
+    if id is not None:
+        refound_request_single = get_object_or_404(RefoundRequest, pk=id)
 
     if request.method == "POST":
         ticket_code = request.POST.get("ticket_code")
         reason = request.POST.get("reason")
 
-        if id is None:
-            event_id = request.POST.get("event")
-            if event_id:
-                try:
-                    event = Event.objects.get(pk=event_id)
-                    success, errors = RefoundRequest.new(ticket_code, reason, user, event)
-                except Event.DoesNotExist:
-                    errors["event"] = "El evento seleccionado no es válido."
-                    success = False
-            else:
-                errors["event"] = "Por favor, selecciona el evento del ticket."
-                success = False
+        if ticket_code:
+            try:
+                ticket_encontrado = Ticket.objects.get(ticket_code=ticket_code)
+                user_enconrtado = ticket_encontrado.user
+                evento_asociado = ticket_encontrado.event
 
-            if not success:
-                return render(
-                    request,
-                    "app/refound/refound_request.html",
-                    {
-                        "errors": errors,
-                        "refound_request": {},
-                        "user_is_organizer": user.is_organizer,
-                        "organizer_events": organizer_events,
-                    },
-                )
+                success, possible_errors = RefoundRequest.new(ticket_code, reason, user_enconrtado, evento_asociado)
+
+                if possible_errors is not None:
+                    errors.update(possible_errors)
+                if not success:
+                    return render(
+                        request,
+                        "app/refound/refound_request.html",
+                        {
+                            "errors": errors,
+                            "refound_request": {},
+                            "user_is_organizer": user.is_organizer,
+                            "organizer_events": organizer_events,
+                        },
+                    )
+                return redirect("events")
+
+            except Ticket.DoesNotExist:
+                errors["ticket_code"] = "El código del ticket no es válido."
         else:
-            organizer_events = RefoundRequest.objects.filter(event__organizer=user)
+            errors["ticket_code"] = "Por favor, proporciona el código del ticket."
 
-        return redirect("events")
-
-    refound_request_single = {}
-    if id is not None:
-        refound_request_single = get_object_or_404(Event, pk=id)
+        return render(
+            request,
+            "app/refound/refound_request.html",
+            {
+                "errors": errors,
+                "refound_request": {},
+                "user_is_organizer": user.is_organizer,
+                "organizer_events": organizer_events,
+            },
+        )
 
     if user.is_organizer:
-        organizer_events = RefoundRequest.objects.filter(event__organizer=user) 
-    else:
-        organizer_events = None #este lo necesito para recuperar ticket valido
+        organizer_events = RefoundRequest.objects.filter(event__organizer=user)
 
     return render(
         request,

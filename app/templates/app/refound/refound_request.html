@@ -113,10 +113,16 @@
                             <td>
                                 <a href="#" class="text-primary">{{ refound.ticket_code }}</a>
                             </td>
-                            <td>Titulo</td>
-                            <td>{{ refound.user.title }}</td>
+                            <td>{{ refound.event.title }}</td>
+                            <td>{{ refound.user.username }}</td>
                             <td>{{ refound.created_at }}</td>
-                            <td><span class="badge bg-warning text-dark">Pendiente</span></td>
+                            {% if refound.approved == Null %}
+                                <td><span class="badge bg-warning text-dark">Pendiente</span></td>
+                            {% elif refound.approved == True %}
+                                <td><span class="badge bg-success text-dark">Aprovado</span></td>
+                            {% else %}
+                                <td><span class="badge bg-danger text-dark">Rechazado</span></td>
+                            {% endif %}
                             <td>
                                 <div class="btn-group">
                                     <a href="#" class="btn btn-sm btn-outline-info me-1" title="Ver detalles">
