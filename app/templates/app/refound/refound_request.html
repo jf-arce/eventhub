@@ -128,10 +128,10 @@
                                     <a href="#" class="btn btn-sm btn-outline-info me-1" title="Ver detalles">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="#" class="btn btn-sm btn-outline-success me-1" title="Aprobar">
+                                    <a href="{% url 'accept_reject_refound_request' refound_id=refound.id action='approve' %}" class="btn btn-sm btn-outline-success me-1" title="Aprobar">
                                         <i class="bi bi-check"></i>
                                     </a>
-                                    <a href="#" class="btn btn-sm btn-outline-danger" title="Rechazar">
+                                    <a href="{% url 'accept_reject_refound_request' refound_id=refound.id action='reject' %}" class="btn btn-sm btn-outline-danger" title="Rechazar">
                                         <i class="bi bi-x"></i>
                                     </a>
                                 </div>

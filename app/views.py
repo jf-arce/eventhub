@@ -737,3 +737,42 @@ def refound_request(request, id=None):
         },
     )
 
+@login_required
+def refound_delete(request, refound_id):
+    user = request.user
+    if not (user.is_organizer or user.is_superuser):
+        return redirect("refound_request")
+
+    refound_request = get_object_or_404(RefoundRequest, pk=refound_id)
+
+    if request.method == "POST":
+        refound_request.delete()
+        return redirect("refound_request")
+    
+    return render(
+        request,
+        "app/refound/refound_request.html",
+        {"refound_request": refound_request}
+    )
+
+@login_required
+def accept_reject_refound_request(request, refound_id, action):
+    user = request.user
+
+    if not (user.is_organizer or user.is_superuser):
+        return redirect("refound_request")
+    
+    refound_request = get_object_or_404(RefoundRequest, pk=refound_id)
+
+    if action == 'approve':
+        refound_request.approved = True
+        messages.success(request, f"La solicitud de reembolso para el ticket {refound_request.ticket_code} ha sido aprobada.")
+    elif action == 'reject':
+        refound_request.approved = False
+        messages.success(request, f"La solicitud de reembolso para el ticket {refound_request.ticket_code} ha sido rechazada.")
+    else:
+        messages.error(request, "Acción inválida.")
+        return redirect("refound_request")
+
+    refound_request.save()
+    return redirect("refound_request")
