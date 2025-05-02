@@ -675,17 +675,23 @@ def venue_edit(request, id):
 @login_required
 def notifications(request):
     user = request.user
+    events_not_found = False
     
     if not (user.is_organizer or user.is_superuser):
         return redirect("events")
     
     notifications = Notification.objects.all().order_by("-created_at")
     
+    events = Event.objects.all()
+    if len(notifications) == 0:
+        events_not_found = True
+        
     return render(
         request,
         "app/notifications/notifications.html",
         {
-            "notifications": notifications
+            "notifications": notifications,
+            "events_not_found": events_not_found,
         },
     )
 
@@ -726,6 +732,10 @@ def notification_form(request, id=None):
 
     if not (user.is_organizer or user.is_superuser):
         return redirect("events")
+    
+    if not Event.objects.exists():
+        messages.error(request, "No hay eventos disponibles para enviar notificaciones.")
+        return redirect("notifications")
 
     if request.method == "POST":
         title = request.POST.get("title")
@@ -739,20 +749,18 @@ def notification_form(request, id=None):
         event = get_object_or_404(Event, pk=event_id)
         
         if destination == "all":
-            # # Obtener todos los usuarios con tickets para el evento
-            # tickets = Ticket.objects.filter(event=event)
-            # users = [ticket.user for ticket in tickets]
+            # Obtener todos los usuarios con tickets para el evento
+            tickets = Ticket.objects.filter(event=event)
+            users = [ticket.user for ticket in tickets]
 
-            # # Crear la notificación para cada usuario
-            # for user in users:
-            #     notification = Notification.objects.create(
-            #         title=title,
-            #         message=message,
-            #         priority=priority,
-            #         event=event,
-            #     )
-            #     notification.users.add(user)
-            return redirect("notifications")
+            notification = Notification.objects.create(
+                title=title,
+                message=message,
+                priority=priority,
+                event=event,
+            )
+            notification.users.set(users)
+            
 
         elif destination == "users":
             user_id = request.POST.get("specific_user")
@@ -786,16 +794,14 @@ def notification_form(request, id=None):
         },
     )
     
-def events_users(request, event_id):
-    event = get_object_or_404(Event, pk=event_id)
-    # Recuperar todo los usuarios que tienen tickets del evento en cuestión
-    # tickets = Ticket.objects.filter(event=event)
-    # users = [ticket.user for ticket in tickets]
+def events_users(request, id):
+    print("Llamando a events_users con ID:", id)
+    event = get_object_or_404(Event, pk=id)
     
-    # retornar la lista de usuarios en formato JSON
-    # return JsonResponse({"users": users})
-    
-    return JsonResponse({"users": []})  # Borrar esto cuando se implemente la funcionalidad
+    tickets = Ticket.objects.filter(event=event)
+    users = [{"id": ticket.user.pk, "username": ticket.user.username} for ticket in tickets]
+
+    return JsonResponse({"usuarios": users})
     
 def notification_update(request, id):
     user = request.user

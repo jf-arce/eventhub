@@ -6,11 +6,26 @@
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Gestión de Notificaciones</h1>
-        <a href="{% url 'notification_form' %}" class="btn btn-primary">
+    
+        <a 
+            href="{% if not events_not_found %}{% url 'notification_form' %}{% else %}#{% endif %}" 
+            class="btn btn-primary"
+            onclick="return verificarEventos({{ events_not_found|yesno:'true,false' }});"
+        >
             <i class="bi bi-plus-circle me-2" aria-hidden="true"></i>
             Crear Notificación
         </a>
     </div>
+    
+    <script>
+        function verificarEventos(eventsNotFound) {
+            if (eventsNotFound) {
+                alert("No hay eventos disponibles para crear notificaciones.");
+                return false;
+            }
+            return true;
+        }
+    </script>
 
     <div class="card mb-4 p-3">
         <form method="get" class="row g-2">
