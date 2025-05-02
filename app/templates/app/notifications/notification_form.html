@@ -112,24 +112,31 @@
     const allRadio = document.getElementById('all');
     const usersRadio = document.getElementById('users');
 
-    // Deshabilitar el selector de usuarios inicialmente
+    // Deshabilitar el selector de usuarios y los destinatarios inicialmente
     usuarioSelect.required = false;
+    allRadio.disabled = true;
+    usersRadio.disabled = true;
 
     // Manejar el cambio en el selector de eventos
     eventoSelect.addEventListener('change', function () {
         const eventoId = this.value;
 
-        // Si no se selecciona un evento, deshabilitar el selector de usuarios y mostrar las opciones de destinatarios
+        // Si no se selecciona un evento, deshabilitar el selector de usuarios y los destinatarios
         if (!eventoId) {
             usuarioSelect.innerHTML = '<option value="">Selecciona un usuario</option>';
             destinatariosContainer.style.display = 'block';
             noUsuariosContainer.style.display = 'none';
             specificUserSelectContainer.style.display = 'none';
             usuarioSelect.required = false;
+            allRadio.disabled = true;
+            usersRadio.disabled = true;
             return;
         }
 
-        // Habilitar el selector de usuarios y cargar los datos
+        // Habilitar los destinatarios y cargar los datos
+        allRadio.disabled = false;
+        usersRadio.disabled = false;
+
         fetch(`/events/${eventoId}/users/`)
             .then(response => {
                 if (!response.ok) {
