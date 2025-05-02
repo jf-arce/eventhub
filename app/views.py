@@ -776,3 +776,16 @@ def accept_reject_refound_request(request, refound_id, action):
 
     refound_request.save()
     return redirect("refound_request")
+
+@login_required
+def refounds(request):
+    user = request.user
+    refounds_by_user = RefoundRequest.objects.filter(user=user)
+
+    return render(
+        request,
+        "app/refound/refounds.html",
+        {
+            "refounds_by_user": refounds_by_user,
+        },
+    )

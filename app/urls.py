@@ -33,6 +33,7 @@ urlpatterns = [
     path("venues/create/", views.venue_create, name="venue_create"),
     path("venues/<int:id>/delete/", views.venue_delete, name="venue_delete"),
     path("venues/<int:id>/edit/", views.venue_edit, name="venue_edit"),
-    path("refound/", views.refound_request, name="refound_request"),
-    path('refound/<int:refound_id>/<str:action>/', views.accept_reject_refound_request, name='accept_reject_refound_request'),
+    path("refound/request/", views.refound_request, name="refound_request"),
+    path("refound/<int:refound_id>/<str:action>/", views.accept_reject_refound_request, name='accept_reject_refound_request'),
+    path("refound/", views.refounds, name='refounds'),
 ]

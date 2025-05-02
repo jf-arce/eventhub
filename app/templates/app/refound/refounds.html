@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Reembolsos{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Mis Reembolsos</h1>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Código de Entrada</th>
+                <th>Evento</th>
+                <th>Solicitante</th>
+                <th>Fecha de Solicitud</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for refound in refounds_by_user%}
+                <tr>
+                    <td>
+                        <a href="#" class="text-primary">{{ refound.ticket_code }}</a>
+                    </td>
+                    <td>{{ refound.event.title }}</td>
+                    <td>{{ refound.user.username }}</td>
+                    <td>{{ refound.created_at }}</td>
+                    {% if refound.approved == Null %}
+                        <td><span class="badge bg-warning text-dark">Pendiente</span></td>
+                    {% elif refound.approved == True %}
+                        <td><span class="badge bg-success text-dark">Aprovado</span></td>
+                    {% else %}
+                        <td><span class="badge bg-danger text-dark">Rechazado</span></td>
+                    {% endif %}
+                    <td>
+                        <div class="hstack gap-1">
+                        <a href="{% url 'event_edit' refound.id %}"
+                            class="btn btn-sm btn-outline-secondary"
+                            aria-label="Editar"
+                            title="Editar">
+                            <i class="bi bi-pencil" aria-hidden="true"></i>
+                        </a>
+                        <form action="{% url 'event_delete' refound.id %}" method="POST">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-outline-danger"
+                                title="Eliminar"
+                                type="submit"
+                                aria-label="Eliminar"
+                                titile="Eliminar">
+                                <i class="bi bi-trash" aria-hidden="true"></i>
+                            </button>
+                        </form>
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">No hay reembolsos disponibles</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

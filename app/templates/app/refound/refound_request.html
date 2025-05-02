@@ -6,7 +6,15 @@
 
 <div class="container mt-5">
     {% if not user_is_organizer %}
-        <h1 class="mb-4">Solicitar Reembolso</h1>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Solicitar Reembolso</h1>
+            <a
+                href="{% url 'refounds' %}"
+                class="btn btn-primary"
+            >
+                Mis Reembolsos
+            </a>
+        </div>
         <div class="row">
             <div class="col-md-8">
                 <div class="card">
