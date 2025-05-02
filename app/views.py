@@ -1,4 +1,5 @@
 import datetime, uuid
+from datetime import datetime
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
@@ -60,14 +61,24 @@ def home(request):
 
 @login_required
 def events(request):
-    events = Event.objects.all().order_by("scheduled_at")
+    date_filter = request.GET.get('date')
     
+    if date_filter:
+        try:
+            date_filter = datetime.strptime(date_filter, '%Y-%m-%d').date()
+            events = Event.objects.filter(scheduled_at__date=date_filter).order_by("scheduled_at")
+        except ValueError:
+            events = Event.objects.all().order_by("scheduled_at")
+    else:
+        events = Event.objects.all().order_by("scheduled_at")
+
     return render(
         request,
         "app/events.html",
         {
             "events": events, 
             "user_is_organizer": request.user.is_organizer,
+            "selected_date": date_filter if date_filter else ''
         },
     )
 
@@ -174,7 +185,7 @@ def event_form(request, id=None):
         [year, month, day] = date.split("-")
         [hour, minutes] = time.split(":")
         scheduled_at = timezone.make_aware(
-            datetime.datetime(int(year), int(month), int(day), int(hour), int(minutes))
+            datetime(int(year), int(month), int(day), int(hour), int(minutes))
         )
 
         category = get_object_or_404(Category, pk=category_id)
@@ -355,7 +366,7 @@ def view_ticket(request, event_id):
             ticket.delete()
             return redirect('view_ticket', event_id=event_id)
     
-    if request.user.is_organizer:
+    if request.user.is_organizer or request.user.is_superuser:
         tickets = Ticket.objects.filter(event=event)
     else:
         tickets = Ticket.objects.filter(event=event, user=request.user)

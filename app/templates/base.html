@@ -18,15 +18,20 @@
         name="viewport"
         content="width=device-width, initial-scale=1"
     />
-
+    <style>
+        .landing-background {
+            background: url('https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+            background-size: cover;
+        }
+    </style>
 </head>
 
-<body>
-    <nav class="navbar navbar-expand-md bg-body-tertiary">
+<body class="d-flex flex-column min-vh-100 bg-light{% block body_class %}{% endblock %}">
+    <nav class="navbar navbar-expand-md navbar-dark bg-black">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/">EventHub</a>
+            <a class="navbar-brand ms-3" href="/">EventHub</a>
 
-            <div class="hstack gap-2">
+            <div class="hstack gap-3 me-3">
                 {% if user.is_authenticated %}
                     <button
                         class="navbar-toggler"
@@ -52,25 +57,15 @@
                                 <li class="nav-item">
                                     {% navbar_link 'venues' 'Ubicaciones' %}
                                 </li>
-                            {% endif %}
-                        </ul>
-                    </div>
-
-                    {% if user.is_organizer or user.is_superuser %}                    
-                        <div
-                            class="collapse navbar-collapse"
-                            id="navbar-content"
-                        >
-                            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                                 <li class="nav-item">
                                     {% navbar_link 'comments' 'Comentarios' %}
                                 </li>
                                 <li class="nav-item">
                                     {% navbar_link 'categorys' 'Categorias' %}
                                 </li>
-                            </ul>
-                        </div>
-                    {% endif %}
+                            {% endif %}
+                        </ul>
+                    </div>
 
                     <form
                         class="d-flex"
@@ -88,7 +83,7 @@
                     <a
                         class="btn btn-sm btn-outline-primary"
                         href="{% url 'login' %}"
-                    >Ingresá</>
+                    >Ingresá</a>
                     <a
                         class="btn btn-sm btn-primary"
                         href="{% url 'register' %}"

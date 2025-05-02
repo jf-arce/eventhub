@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
+from datetime import datetime
 
 class User(AbstractUser):
     is_organizer = models.BooleanField(default=False)
@@ -308,3 +309,16 @@ class Rating(models.Model):
             return True, rating_instance
         except cls.DoesNotExist:
             return False, "No se encontró la calificación para actualizar."
+    @classmethod
+    def filter_events(cls, date_filter=None):
+        queryset = cls.objects.all()
+        
+        if date_filter:
+            start_date = datetime.combine(date_filter, datetime.min.time())
+            end_date = datetime.combine(date_filter, datetime.max.time())
+            
+            queryset = queryset.filter(
+                scheduled_at__gte=start_date
+            )
+        
+        return queryset.order_by('scheduled_at')

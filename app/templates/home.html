@@ -1,12 +1,67 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="p-5 bg-light rounded-3">
-        <h1 class="display-5 fw-bold">Eventos y Entradas</h1>
-        <p class="fs-4">Descubre, organiza y participa en los mejores eventos. Compra entradas, deja
-            comentarios y califica tus experiencias.</p>
-        <div>
+<style>
+    .landing-background {
+        background: url('https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+        background-size: cover;
+    }
+</style>
+
+<main class="flex-grow-1 landing-background">
+    <div class="container py-5">
+        <div class="bg-white bg-opacity-75 rounded-4 p-5 shadow-lg text-center">
+            <h1 class="display-4 fw-bold mb-4">Eventos y Entradas</h1>
+            <p class="lead mb-5">
+                Descubre, organiza y participa en los mejores eventos.<br />
+                Compra entradas, deja comentarios y califica tus experiencias.
+            </p>
+
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="bi bi-search fs-1 text-primary"></i>
+                            <h5 class="card-title mt-3">Explora eventos</h5>
+                            <p class="card-text">
+                                Busca eventos y descubre nuevas
+                                experiencias.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i
+                                class="bi bi-calendar-event fs-1 text-primary"
+                            ></i>
+                            <h5 class="card-title mt-3">Crea eventos</h5>
+                            <p class="card-text">
+                                Organiza tus propios eventos y vende entradas
+                                fácilmente.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i
+                                class="bi bi-ticket-perforated fs-1 text-primary"
+                            ></i>
+                            <h5 class="card-title mt-3">Compra entradas</h5>
+                            <p class="card-text">
+                                Consigue tus tickets rápido y seguro en un solo
+                                lugar.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
-{% endblock content %}
+</main>
+{% endblock %}
