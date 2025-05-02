@@ -270,7 +270,7 @@ class Rating(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('event', 'user')  # evita duplicados
+        unique_together = ('event', 'user')  
 
     def __str__(self):
         return f"{self.user.username} - {self.rating}★"

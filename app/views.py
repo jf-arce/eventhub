@@ -286,20 +286,22 @@ def update_rating(request, event_id):
 def delete_rating(request, event_id):
     event = get_object_or_404(Event, id=event_id)
     if request.method == 'POST':
-        # Si es el organizador, puede borrar cualquier reseña de su evento
         if request.user == event.organizer:
             user_id = request.POST.get('rating_user_id')
             rating = Rating.objects.filter(event=event, user_id=user_id).first()
             if rating:
                 rating.delete()
         else:
-            # Si no es organizador, solo puede borrar su propia reseña
             Rating.delete_rating(event=event, user=request.user)
     return redirect('event_detail', id=event.pk)
     
 @login_required
 def purchase_ticket(request, event_id):
     event = get_object_or_404(Event, id=event_id)
+    
+    if request.user == event.organizer:
+        messages.error(request, "Los organizadores no pueden comprar tickets para sus propios eventos")
+        return redirect('event_detail', id=event_id)
     
     if request.method == "POST":
         try:
@@ -309,7 +311,6 @@ def purchase_ticket(request, event_id):
             ticket_code = str(uuid.uuid4())[:8].upper()
             
             buy_date = timezone.now().date()
-            
             
             success, errors = Ticket.new(
                 buy_date=buy_date,
