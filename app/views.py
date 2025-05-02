@@ -676,22 +676,36 @@ def venue_edit(request, id):
 def notifications(request):
     user = request.user
     events_not_found = False
-    
+
     if not (user.is_organizer or user.is_superuser):
         return redirect("events")
-    
+
+    search_query = request.GET.get("search", "").strip()
+    event_filter = request.GET.get("event", "")
+    priority_filter = request.GET.get("priority", "")
+
     notifications = Notification.objects.all().order_by("-created_at")
-    
+
+    if search_query:
+        notifications = notifications.filter(title__icontains=search_query)
+
+    if event_filter:
+        notifications = notifications.filter(event__id=event_filter)
+
+    if priority_filter:
+        notifications = notifications.filter(priority=priority_filter)
+
     events = Event.objects.all()
     if len(notifications) == 0:
         events_not_found = True
-        
+
     return render(
         request,
         "app/notifications/notifications.html",
         {
             "notifications": notifications,
             "events_not_found": events_not_found,
+            "events": events,
         },
     )
 

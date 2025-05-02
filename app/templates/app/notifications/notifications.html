@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center my-4">
         <h1>Gestión de Notificaciones</h1>
     
         <a 
@@ -46,8 +46,8 @@
                 <select name="priority" class="form-select">
                     <option value="">Todas las prioridades</option>
                     <option value="normal" {% if request.GET.priority == 'normal' %}selected{% endif %}>Normal</option>
-                    <option value="alta" {% if request.GET.priority == 'alta' %}selected{% endif %}>Alta</option>
-                    <option value="baja" {% if request.GET.priority == 'baja' %}selected{% endif %}>Baja</option>
+                    <option value="high" {% if request.GET.priority == 'high' %}selected{% endif %}>Alta</option>
+                    <option value="low" {% if request.GET.priority == 'low' %}selected{% endif %}>Baja</option>
                 </select>
             </div>
             <div class="col-md-2">
