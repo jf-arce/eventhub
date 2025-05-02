@@ -1,7 +1,7 @@
 {% extends 'base.html' %} 
 {% block content %}
 <div
-    class=" {% if user_is_organizer %}bg-info bg-opacity-25{% else %}bg-warning bg-opacity-25{% endif %}"
+    class=" {% if user_is_organizer %}bg-primary bg-opacity-25{% elif user.is_superuser %}bg-success bg-opacity-50{% else %}bg-dark bg-opacity-50{% endif %}"
     style="height: calc(100vh - 55.97px);"
 >
 <div
