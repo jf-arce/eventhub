@@ -82,9 +82,15 @@
                         <a href="{% url 'notification_detail' notification.id %}" class="btn btn-outline-primary btn-sm">
                             <i class="bi bi-eye"></i>
                         </a>
-                        {% comment %} <a href="{% url 'notification_edit' notification.id %}" class="btn btn-outline-secondary btn-sm">
+                        <button 
+                            type="button" 
+                            class="btn btn-outline-warning btn-sm" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#exampleModal{{ notification.id }}"
+                        >
                             <i class="bi bi-pencil"></i>
-                        </a> {% endcomment %}
+                        </button>
+                        
                         <form action="{% url 'notification_delete' notification.id %}" method="post" style="display:inline;">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Estás seguro que quieres eliminar esta notificación?')">
@@ -93,6 +99,44 @@
                         </form>
                     </td>
                 </tr>
+
+                <div class="modal fade" id="exampleModal{{ notification.id }}" tabindex="-1" aria-labelledby="exampleModalLabel{{ notification.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalLabel{{ notification.id }}">
+                                    Editar Notificación
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form method="post" action="{% url 'notification_update' notification.id %}">
+                                    {% csrf_token %}
+                                    <div class="mb-3">
+                                        <label for="title" class="form-label">Título *</label>
+                                        <input type="text" class="form-control" id="title" name="title" value="{{ notification.title }}" placeholder="Escribe un título...">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="message" class="form-label">Mensaje *</label>
+                                        <textarea class="form-control" id="message" name="message" rows="3" placeholder="Escribe el mensaje aquí...">{{ notification.message }}</textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="priority" class="form-label">Prioridad *</label>
+                                        <select class="form-select" id="priority" name="priority">
+                                            <option value="normal" {% if notification.priority == 'normal' %}selected{% endif %}>Normal</option>
+                                            <option value="high" {% if notification.priority == 'high' %}selected{% endif %}>Alta</option>
+                                            <option value="low" {% if notification.priority == 'low' %}selected{% endif %}>Baja</option>
+                                        </select>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             {% empty %}
                 <tr>
                     <td colspan="6" class="text-center">No hay notificaciones disponibles</td>

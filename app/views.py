@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.http import JsonResponse
 
 from .models import Event, User, Notification
 
@@ -240,6 +241,17 @@ def notification_form(request, id=None):
         },
     )
     
+def events_users(request, event_id):
+    event = get_object_or_404(Event, pk=event_id)
+    # Recuperar todo los usuarios que tienen tickets del evento en cuestión
+    # tickets = Ticket.objects.filter(event=event)
+    # users = [ticket.user for ticket in tickets]
+    
+    # retornar la lista de usuarios en formato JSON
+    # return JsonResponse({"users": users})
+    
+    return JsonResponse({"users": []})  # Borrar esto cuando se implemente la funcionalidad
+    
 def notification_update(request, id):
     user = request.user
     
@@ -250,6 +262,8 @@ def notification_update(request, id):
         title = request.POST.get("title")
         message = request.POST.get("message")
         priority = request.POST.get("priority")
+        
+        print(title, message, priority)
 
         Notification.validate(title, message, priority)
         
