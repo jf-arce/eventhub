@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Reembolsos{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+    {% if not user_is_organizer and not user_is_superuser%}
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Solicitar Reembolso</h1>
+            <a
+                href="{% url 'refounds' %}"
+                class="btn btn-primary"
+            >
+                Mis Reembolsos
+            </a>
+        </div>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        Formulario de Solicitud
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> Puedes solicitar un reembolso hasta 48 horas antes del evento. Una vez procesada la solicitud, el reembolso se realizará en un plazo de 7 a 14 días hábiles.
+                        </div>
+                        
+                        <form action="{% url 'refound_request' %}" method="POST">
+                            {% csrf_token %}
+                            <div class="vstack gap-3">
+                                {% if errors %}
+                                <div class="alert alert-danger">
+                                    <ul>
+                                        {% if errors.ticket_code %}
+                                            <li><strong>Error:</strong> {{ errors.ticket_code }}</li>
+                                        {% else %}
+                                            {% for field, error_list in errors.items %}
+                                                {% for error in error_list %}
+                                                    <li><strong>{{ field|capfirst }}:</strong> {{ error }}</li>
+                                                {% endfor %}
+                                            {% endfor %}
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                                {% endif %}
+                                <div class="mb-3">
+                                    <label for="ticket_code" class="form-label">Código de ticket</label>
+                                    <input class="form-control"
+                                           id="ticket_code"
+                                           required
+                                           type="text"
+                                           value="{{ refound_request.ticket_code }}"
+                                           name="ticket_code" />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="reason" class="form-label">Motivo del reembolso</label>
+                                    <textarea
+                                        class="form-control"
+                                        id="reason"
+                                        name="reason"
+                                        required
+                                        rows="4"
+                                        placeholder="Proporciona más información sobre tu solicitud de reembolso..."></textarea>
+                                </div>
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="policy_acceptance" required>
+                                    <label class="form-check-label" for="policy_acceptance">Entiendo y acepto la <a href="#" class="text-primary">política de reembolsos</a>.</label>
+                                </div>
+                                <div>
+                                    <button type="submit" class="btn btn-primary">Enviar Solicitud</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        Política de Reembolsos
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <span class="text-success"><i class="bi bi-check-circle"></i></span> 
+                                Reembolso del 100% hasta 7 días antes del evento.
+                            </li>
+                            <li class="mb-2">
+                                <span class="text-success"><i class="bi bi-check-circle"></i></span> 
+                                Reembolso del 50% entre 2 y 7 días antes del evento.
+                            </li>
+                            <li class="mb-2">
+                                <span class="text-danger"><i class="bi bi-x-circle"></i></span>
+                                Sin reembolso a menos de 48 horas del evento.
+                            </li>
+                            <li class="mb-2">
+                                <span class="text-info"><i class="bi bi-info-circle"></i></span>
+                                El reembolso se realizará al mismo método de pago utilizado en la compra.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <h1 class="mb-4">Solicitudes de Reembolso</h1>
+        <div class="card">
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Código de Entrada</th>
+                            <th>Evento</th>
+                            <th>Solicitante</th>
+                            <th>Fecha de Solicitud</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    {% for refound in organizer_events %}
+
+                    <tbody>
+                        <tr>
+                            <td>
+                                <a href="#" class="text-primary">{{ refound.ticket_code }}</a>
+                            </td>
+                            <td>{{ refound.event.title }}</td>
+                            <td>{{ refound.user.username }}</td>
+                            <td>{{ refound.created_at }}</td>
+                            {% if refound.approved == Null %}
+                                <td><span class="badge bg-warning text-dark">Pendiente</span></td>
+                            {% elif refound.approved == True %}
+                                <td><span class="badge bg-success text-dark">Aprovado</span></td>
+                            {% else %}
+                                <td><span class="badge bg-danger text-dark">Rechazado</span></td>
+                            {% endif %}
+                            <td>
+                                <div class="btn-group">
+                                    <a href="#" class="btn btn-sm btn-outline-info me-1" title="Ver detalles">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'accept_reject_refound_request' refound_id=refound.id action='approve' %}" class="btn btn-sm btn-outline-success me-1" title="Aprobar">
+                                        <i class="bi bi-check"></i>
+                                    </a>
+                                    <a href="{% url 'accept_reject_refound_request' refound_id=refound.id action='reject' %}" class="btn btn-sm btn-outline-danger" title="Rechazar">
+                                        <i class="bi bi-x"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

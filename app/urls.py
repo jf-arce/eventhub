@@ -19,11 +19,11 @@ urlpatterns = [
     path("events/<int:event_id>/rating/edit/", views.edit_rating, name="edit_rating"),
     path("events/<int:event_id>/rating/update/", views.update_rating, name="update_rating"),
     path("events/<int:event_id>/rating/delete/", views.delete_rating, name="delete_rating"),
+    path('events/comments/<int:id>/delete', views.event_comment_delete, name='event_comment_delete'),
     path("comments/", views.comments, name="comments"),
     path("comments/<int:id>/delete/", views.comment_delete, name="comment_delete"),
     path("comments/<int:event_id>/addComment/", views.add_comment, name="add_comment"),
     path('comments/<int:id>/update', views.comment_update, name='comment_update'),
-    path('events/comments/<int:id>/delete', views.event_comment_delete, name='event_comment_delete'),
     path("categorys/", views.categorys, name="categorys"),
     path("category/create/", views.category_form, name="category_form"),
     path("categorys/<int:id>/edit/", views.category_form, name="category_edit"),
@@ -33,4 +33,10 @@ urlpatterns = [
     path("venues/create/", views.venue_create, name="venue_create"),
     path("venues/<int:id>/delete/", views.venue_delete, name="venue_delete"),
     path("venues/<int:id>/edit/", views.venue_edit, name="venue_edit"),
+    path("refound/request/", views.refound_request, name="refound_request"),
+    path("refound/<int:refound_id>/<str:action>/", views.accept_reject_refound_request, name='accept_reject_refound_request'),
+    path("refound/", views.refounds, name='refounds'),
+    path("refound/delete/<int:refound_id>/", views.refound_delete, name="refound_delete"),
+    path('refound/<int:id>/update', views.refound_edit, name='refound_edit'),
+
 ]

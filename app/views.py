@@ -5,10 +5,12 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.contrib import messages
-from .models import Event, User, Rating, Ticket, Comment, Category, Venue
+from .models import Event, User, Rating, Ticket, Comment, Category, Venue, RefoundRequest
 from .forms import RatingForm 
 from django.db.models import Count
 from django.db.models.deletion import ProtectedError
+from datetime import timedelta
+from django.utils import timezone
 
 def register(request):
     if request.method == "POST":
@@ -701,3 +703,153 @@ def venue_edit(request, id):
             "user_is_organizer": request.user.is_organizer or request.user.is_superuser
         }
     )
+
+@login_required
+def refound_request(request, id=None):
+    user = request.user
+    errors = {}
+    organizer_events = None
+    refound_request_single = {}
+
+    if id is not None:
+        refound_request_single = get_object_or_404(RefoundRequest, pk=id)
+
+    if request.method == "POST":
+        ticket_code = request.POST.get("ticket_code")
+        reason = request.POST.get("reason")
+
+        if ticket_code:
+            try:
+                ticket_encontrado = Ticket.objects.get(ticket_code=ticket_code)
+                user_enconrtado = ticket_encontrado.user
+                evento_asociado = ticket_encontrado.event
+
+                # Valido que el reembolso sea dentro de los 30 dias despues de la fecha del evento
+                fecha_limite_reembolso = evento_asociado.scheduled_at + timedelta(days=30)
+                ahora = timezone.now()
+                if ahora > fecha_limite_reembolso:
+                    errors["ticket_code"] = "Han pasado más de 30 días desde la fecha del evento. No se puede solicitar un reembolso."
+                    return render(
+                        request,
+                        "app/refound/refound_request.html",
+                        {
+                            "errors": errors,
+                            "refound_request": {"ticket_code": ticket_code, "reason": reason},
+                            "user_is_organizer": user.is_organizer,
+                            "organizer_events": organizer_events,
+                        },
+                    )
+
+                success, possible_errors = RefoundRequest.new(ticket_code, reason, user_enconrtado, evento_asociado)
+
+                if possible_errors is not None:
+                    errors.update(possible_errors)
+                if not success:
+                    return render(
+                        request,
+                        "app/refound/refound_request.html",
+                        {
+                            "errors": errors,
+                            "refound_request": {"ticket_code": ticket_code, "reason": reason},
+                            "user_is_organizer": user.is_organizer,
+                            "organizer_events": organizer_events,
+                        },
+                    )
+                return redirect("events")
+
+            except Ticket.DoesNotExist:
+                errors["ticket_code"] = "El código del ticket no es válido."
+        else:
+            errors["ticket_code"] = "Por favor, proporciona el código del ticket."
+
+        return render(
+            request,
+            "app/refound/refound_request.html",
+            {
+                "errors": errors,
+                "refound_request": {"ticket_code": ticket_code, "reason": reason},
+                "user_is_organizer": user.is_organizer,
+                "organizer_events": organizer_events,
+            },
+        )
+
+    if user.is_organizer:
+        organizer_events = RefoundRequest.objects.filter(event__organizer=user)
+
+    return render(
+        request,
+        "app/refound/refound_request.html",
+        {
+            "refound_request": refound_request_single,
+            "user_is_organizer": user.is_organizer,
+            "organizer_events": organizer_events,
+        },
+    )
+
+@login_required
+def refound_delete(request, refound_id):
+    user = request.user
+    if(user.is_organizer or user.is_superuser):
+        return redirect("refounds")
+
+    refound_request = get_object_or_404(RefoundRequest, pk=refound_id)
+
+    if request.method == "POST":
+        refound_request.delete()
+        return redirect("refounds")
+    
+    return render(
+        request,
+        "app/refound/refounds.html",
+        {"refounds": refounds}
+    )
+
+@login_required
+def accept_reject_refound_request(request, refound_id, action):
+    user = request.user
+
+    if not (user.is_organizer or user.is_superuser):
+        return redirect("refound_request")
+    
+    refound_request = get_object_or_404(RefoundRequest, pk=refound_id)
+
+    if action == 'approve':
+        refound_request.approved = True
+        messages.success(request, f"La solicitud de reembolso para el ticket {refound_request.ticket_code} ha sido aprobada.")
+    elif action == 'reject':
+        refound_request.approved = False
+        messages.success(request, f"La solicitud de reembolso para el ticket {refound_request.ticket_code} ha sido rechazada.")
+    else:
+        messages.error(request, "Acción inválida.")
+        return redirect("refound_request")
+
+    refound_request.save()
+    return redirect("refound_request")
+
+@login_required
+def refounds(request):
+    user = request.user
+    refounds_by_user = RefoundRequest.objects.filter(user=user)
+
+    return render(
+        request,
+        "app/refound/refounds.html",
+        {
+            "refounds_by_user": refounds_by_user,
+        },
+    )
+
+@login_required
+def refound_edit(request, id):
+
+    if request.method == "POST":
+        reason = request.POST.get("reason")
+        refound = get_object_or_404(RefoundRequest, pk=id)
+        
+        refound.update(reason)
+        
+        return redirect("refounds")
+    
+    comment = get_object_or_404(RefoundRequest, pk=id)
+    return redirect("refounds")
+

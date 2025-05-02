@@ -156,6 +156,48 @@ class Event(models.Model):
 
         self.save()
 
+class RefoundRequest(models.Model):
+    approved = models.BooleanField(null=True, default=None)
+    approval_date = models.DateTimeField(auto_now_add=True)
+    ticket_code = models.CharField(max_length=200)
+    reason = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_refund")
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="refound_event")
+
+
+    def __str__(self):
+        return self.ticket_code
+
+    @classmethod
+    def validate(cls, ticket_code, reason):
+        errors = {}
+
+        if ticket_code == "":
+            errors["ticket_code"] = "Por favor ingrese su codigo de ticket"
+
+        if reason == "":
+            errors["reason"] = "Por favor ingrese una razon de reembolso"
+
+        return errors
+
+    @classmethod
+    def new(cls,ticket_code, reason, user, event):
+        errors = RefoundRequest.validate(ticket_code, reason)
+        RefoundRequest.objects.create(
+            ticket_code=ticket_code,
+            reason=reason,
+            user=user,
+            event=event,
+        )
+
+        return True, None
+
+    def update(self, reason):
+        self.reason = reason or self.reason
+        
+        self.save()
+
 class Ticket(models.Model):
     TICKET_TYPES = [
         ("GENERAL", "GENERAL"),
@@ -203,7 +245,8 @@ class Ticket(models.Model):
             quantity=quantity,
             type=type,
             event=event,
-            user=user
+            user=user,
+
         )
 
         return True, None
@@ -309,6 +352,7 @@ class Rating(models.Model):
             return True, rating_instance
         except cls.DoesNotExist:
             return False, "No se encontró la calificación para actualizar."
+        
     @classmethod
     def filter_events(cls, date_filter=None):
         queryset = cls.objects.all()
