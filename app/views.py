@@ -794,6 +794,7 @@ def notification_form(request, id=None):
         },
     )
     
+@login_required
 def events_users(request, id):
     print("Llamando a events_users con ID:", id)
     event = get_object_or_404(Event, pk=id)
@@ -830,5 +831,30 @@ def notification_update(request, id):
 
     return redirect("notifications")
         
+        
+@login_required
+def user_notifications(request):
+    user = request.user
+    notifications = Notification.objects.filter(users=user).order_by("-created_at")
+    unread_count = notifications.filter(is_read=False).count()
     
+    return render(
+        request,
+        "app/notifications/user_notifications.html",
+        {
+            "notifications": notifications,
+            "unread_count": unread_count,
+        },
+    )
     
+@login_required
+def mark_as_read(request, notif_id):
+    notif = get_object_or_404(Notification, id=notif_id, users=request.user)
+    notif.is_read = True
+    notif.save()
+    return redirect('user_notifications')
+
+@login_required
+def mark_all_as_read(request):
+    request.user.notifications.filter(is_read=False).update(is_read=True)
+    return redirect('user_notifications')

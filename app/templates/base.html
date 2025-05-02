@@ -48,10 +48,19 @@
                             <li class="nav-item">
                                 {% navbar_link 'events' 'Eventos' %}
                             </li>
-                            {% if user.is_organizer or user.is_superuser %}
-                                <li class="nav-item">
-                                    {% navbar_link 'venues' 'Ubicaciones' %}
-                                </li>
+                            {% if not user.is_organizer or user.is_superuser %}  
+                            <li class="nav-item position-relative mx-3">
+                                <a class="nav-link" href="{% url 'user_notifications' %}">
+                                    <i class="bi bi-bell fs-5 position-relative">
+                                        {% if notificaciones_no_leidas > 0 %}
+                                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">
+                                                {{ notificaciones_no_leidas }}
+                                                <span class="visually-hidden">notificaciones no leídas</span>
+                                            </span>
+                                        {% endif %}
+                                    </i>
+                                </a>
+                            </li>
                             {% endif %}
                         </ul>
                     </div>
@@ -70,6 +79,9 @@
                             </li>
                             <li class="nav-item">
                                 {% navbar_link 'categorys' 'Categorias' %}
+                            </li>
+                            <li class="nav-item">
+                                {% navbar_link 'venues' 'Ubicaciones' %}
                             </li>
                         </ul>
                     </div>
@@ -104,10 +116,4 @@
     {% block content %}
     {% endblock %}
 </body>
-<script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq"
-    crossorigin="anonymous"
-></script>
-
 </html>
