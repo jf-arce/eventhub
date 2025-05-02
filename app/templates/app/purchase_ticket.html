@@ -1,5 +1,11 @@
-{% extends 'base.html' %} {% block content %}
-<div class="container my-5">
+{% extends 'base.html' %} 
+
+{% block content %}
+{% if user.is_organizer %}
+    <script>
+        window.location.href = "{% url 'events' %}";
+    </script>
+{% else %}<div class="container my-5">
     <div class="row">
         <div class="col-md-8">
             <div class="card shadow-sm">
@@ -378,4 +384,5 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}

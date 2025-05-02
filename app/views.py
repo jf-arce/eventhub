@@ -298,6 +298,10 @@ def delete_rating(request, event_id):
 def purchase_ticket(request, event_id):
     event = get_object_or_404(Event, id=event_id)
     
+    if request.user == event.organizer:
+        messages.error(request, "Los organizadores no pueden comprar tickets para sus propios eventos")
+        return redirect('event_detail', id=event_id)
+    
     if request.method == "POST":
         try:
             quantity = request.POST.get("cantidad")
@@ -306,7 +310,6 @@ def purchase_ticket(request, event_id):
             ticket_code = str(uuid.uuid4())[:8].upper()
             
             buy_date = timezone.now().date()
-            
             
             success, errors = Ticket.new(
                 buy_date=buy_date,
