@@ -104,7 +104,7 @@ class Event(models.Model):
     description = models.TextField()
     scheduled_at = models.DateTimeField()
     organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="organized_events")
-    venue = models.ForeignKey(Venue, on_delete=models.CASCADE, related_name="events")
+    venue = models.ForeignKey(Venue, on_delete=models.PROTECT, related_name="events")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="category_event")

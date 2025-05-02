@@ -8,6 +8,7 @@ from django.contrib import messages
 from .models import Event, User, Rating, Ticket, Comment, Category, Venue, Notification
 from .forms import RatingForm 
 from django.db.models import Count
+from django.db.models.deletion import ProtectedError
 
 def register(request):
     if request.method == "POST":
@@ -609,7 +610,16 @@ def venue_delete(request, id):
 
     if request.method == "POST":
         venue = get_object_or_404(Venue, pk=id)
-        venue.delete()
+        try:
+            venue.delete()
+            messages.success(request, "Ubicación eliminada exitosamente")
+        except ProtectedError:
+            related_events = Event.objects.filter(venue=venue)
+            event_names = ", ".join([event.title for event in related_events])
+            
+            error_message = f"No se puede eliminar esta ubicación porque está siendo utilizada por los siguientes eventos: {event_names}"
+            messages.error(request, error_message)
+        
         return redirect("venues")
 
     return redirect("venues")

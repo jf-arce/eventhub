@@ -1,7 +1,5 @@
 {% extends "base.html" %}
-
 {% block title %}Ubicaciones{% endblock %}
-
 {% block content %}
 
 <style>
@@ -43,31 +41,57 @@
                         <td>{{ venue.capacity }}</td>
                         <td class="truncate">{{ venue.contact }}</td>
                         <td class="text-end">
-                            <button 
+                            <button
                                 class="btn btn-sm btn-outline-warning me-2"
-                                data-bs-toggle="modal" 
+                                data-bs-toggle="modal"
                                 data-bs-target="#contactModal-{{venue.id}}"
                             >
                                 <i class="bi bi-eye"></i>
                             </button>
-                            <a href="{% url 'venue_edit' venue.id %}" class="btn btn-sm btn-outline-primary me-2">
+                            <a
+                                href="{% url 'venue_edit' venue.id %}"
+                                class="btn btn-sm btn-outline-primary me-2"
+                            >
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            <form action="{% url 'venue_delete' venue.id %}" method="POST" class="d-inline">
+                            <form
+                                action="{% url 'venue_delete' venue.id %}"
+                                method="POST"
+                                class="d-inline delete-venue-form"
+                            >
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-danger delete-venue-btn"
+                                >
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
                         </td>
                     </tr>
 
-                    <div class="modal fade" id="contactModal-{{venue.id}}" tabindex="-1" aria-labelledby="contactModalLabel-{{venue.id}}" aria-hidden="true">
+                    <div
+                        class="modal fade"
+                        id="contactModal-{{venue.id}}"
+                        tabindex="-1"
+                        aria-labelledby="contactModalLabel-{{venue.id}}"
+                        aria-hidden="true"
+                    >
                         <div class="modal-dialog">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="contactModalLabel-{{venue.id}}">Información de Contacto - {{venue.name}}</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <h5
+                                        class="modal-title"
+                                        id="contactModalLabel-{{venue.id}}"
+                                    >
+                                        Información de Contacto - {{venue.name}}
+                                    </h5>
+                                    <button
+                                        type="button"
+                                        class="btn-close"
+                                        data-bs-dismiss="modal"
+                                        aria-label="Close"
+                                    ></button>
                                 </div>
                                 <div class="modal-body">
                                     <h6>Dirección:</h6>
@@ -78,7 +102,13 @@
                                     <p class="text-wrap">{{venue.contact}}</p>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-secondary"
+                                        data-bs-dismiss="modal"
+                                    >
+                                        Cerrar
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -96,4 +126,54 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == 'error' %}
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: '{{ message }}',
+                    confirmButtonColor: '#3085d6',
+                });
+            {% elif message.tags == 'success' %}
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: '{{ message }}',
+                    confirmButtonColor: '#3085d6',
+                });
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteButtons = document.querySelectorAll('.delete-venue-btn');
+
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const form = this.closest('form');
+
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: 'Esta acción eliminará la ubicación permanentemente.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+    });
+</script>
 {% endblock %}

@@ -48,9 +48,11 @@
                             <li class="nav-item">
                                 {% navbar_link 'events' 'Eventos' %}
                             </li>
-                            <li class="nav-item">
-                                {% navbar_link 'venues' 'Ubicaciones' %}
-                            </li>
+                            {% if user.is_organizer or user.is_superuser %}
+                                <li class="nav-item">
+                                    {% navbar_link 'venues' 'Ubicaciones' %}
+                                </li>
+                            {% endif %}
                         </ul>
                     </div>
 
