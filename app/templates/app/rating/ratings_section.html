@@ -1,0 +1,230 @@
+<div class="mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="border-bottom border-primary pb-2">Calificaciones y Reseñas <span class="badge bg-secondary rounded-pill">{{ ratings|length }}</span></h3>
+    </div>
+
+    {% for rating in ratings %}
+        {% if rating.user == request.user %}
+        <div class="card mb-4 border-primary shadow-sm hover-shadow">
+            <div class="card-header bg-primary bg-opacity-10">
+                <div class="d-flex align-items-center">
+                    <div class="me-2">
+                        <i class="bi bi-person-circle fs-4 text-primary"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0">
+                            {{ rating.user.username }}
+                            <span class="badge bg-primary ms-2">Tu reseña</span>
+                        </h5>
+                        <div class="text-muted small">{{ rating.created_at|date:"d M Y, H:i" }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <h6 class="mb-2 fw-bold">{{ rating.title }}</h6>
+                <div class="text-warning mb-3" style="font-size: 1.2rem;">
+                    {% for i in "12345" %}
+                        {% if rating.rating >= forloop.counter %}
+                            <i class="bi bi-star-fill"></i>
+                        {% else %}
+                            <i class="bi bi-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <p class="mb-2">{{ rating.text }}</p>
+            </div>
+            {% if rating.user == request.user or request.user == event.organizer or request.user.is_superuser %}
+            <div class="card-footer bg-light">
+                <div class="d-flex justify-content-end">
+                    <form method="get" action="{% url 'edit_rating' event.id %}#edit-rating-section" class="me-2">
+                        {% if rating.user == request.user %}
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-pencil me-1"></i>Editar
+                        </button>
+                        {% endif %}
+                    </form>
+                    <form method="post" action="{% url 'delete_rating' event.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="rating_user_id" value="{{ rating.user.id }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-trash me-1"></i>Eliminar
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% endfor %}
+
+    {% for rating in ratings %}
+        {% if rating.user != request.user %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex flex-column">
+                    <div class="d-flex justify-content-between mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="me-2">
+                                <i class="bi bi-person-circle fs-4 text-secondary"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0">
+                                    {{ rating.user.username }}
+                                </h5>
+                                <div class="text-muted small">{{ rating.created_at|date:"d M Y, H:i" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <h6 class="mb-1">{{ rating.title }}</h6>
+                    <div class="text-warning mb-2">
+                        {% for i in "12345" %}
+                            {% if rating.rating >= forloop.counter %}
+                                <i class="bi bi-star-fill"></i>
+                            {% else %}
+                                <i class="bi bi-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <p class="mb-2">{{ rating.text }}</p>
+                    {% if rating.user == request.user or request.user == event.organizer or request.user.is_superuser %}
+                        <div class="d-flex justify-content-end mt-2">
+                            <form method="get" action="{% url 'edit_rating' event.id %}#edit-rating-section" class="me-2">
+                                {% if rating.user == request.user %}
+                                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                    <i class="bi bi-pencil me-1"></i>Editar
+                                </button>
+                                {% endif %}
+                            </form>
+                            <form method="post" action="{% url 'delete_rating' event.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="rating_user_id" value="{{ rating.user.id }}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-trash me-1"></i>Eliminar
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+
+    {% if ratings|length == 0 %}
+        <div class="text-center p-5 mb-4 bg-white rounded shadow-sm">
+            <div class="display-4 mb-3">🌟</div>
+            <h4 class="text-secondary mb-3">Sin reseñas aún</h4>
+            <p class="text-muted">¡Este evento está esperando opiniones! Comparte tu experiencia y ayuda a otros asistentes.</p>
+        </div>
+    {% endif %}
+
+    {% if editing %}
+        <div class="card" id="edit-rating-section">
+            <div class="card-body">
+                <form method="post" action="{% url 'update_rating' event.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_title" class="form-label">Título de tu reseña *</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="text-danger">{{ form.title.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tu calificación *</label>
+                        <div class="rating">
+                            {% for choice in form.rating %}
+                                {{ choice.tag }}
+                                <label for="{{ choice.id_for_label }}">&#9733;</label>
+                            {% endfor %}
+                        </div>
+                        {% if form.rating.errors %}
+                            <div class="text-danger">
+                                {% for error in form.rating.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="small text-muted">Selecciona una calificación (1-5 estrellas)</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_text" class="form-label">Tu reseña (opcional)</label>
+                        {{ form.text }}
+                        {% if form.text.errors %}
+                            <div class="text-danger">{{ form.text.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </form>
+            </div>
+        </div>
+    {% elif not user_rated and request.user != event.organizer %}
+        <div class="card">
+            <div class="card-body">
+                <form id="rating-form" method="post" action="{% url 'add_rating' event.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_title" class="form-label">Título de tu reseña *</label>
+                        {{ form.title }}
+                        <div id="title-error" class="text-danger">
+                            {% for error in form.title.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tu calificación *</label>
+                        <div class="rating">
+                            {% for choice in form.rating %}
+                                {{ choice.tag }}
+                                <label for="{{ choice.id_for_label }}">&#9733;</label>
+                            {% endfor %}
+                        </div>
+                        <div id="rating-error" class="text-danger" style="display: none;">Debes seleccionar una calificación.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_text" class="form-label">Tu reseña (opcional)</label>
+                        {{ form.text }}
+                        {% if form.text.errors %}
+                            <div class="text-danger">{{ form.text.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary" onclick="validateRating(event)">Enviar calificación</button>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    function validateRating(event) {
+        const titleInput = document.getElementById('id_title');
+        const titleError = document.getElementById('title-error');
+        const ratingInputs = document.querySelectorAll('input[name="rating"]');
+        const ratingError = document.getElementById('rating-error');
+        let ratingSelected = false;
+
+        
+        titleError.innerHTML = '';
+        ratingError.style.display = 'none';
+
+        // Cheque si el titulo esta vacio
+        if (!titleInput.value.trim()) {
+            event.preventDefault(); // Prevent form submission
+            titleError.innerHTML = 'Este campo es obligatorio.'; // Show error message
+        }
+
+        // Chequea lo mismo con la calificacion
+        ratingInputs.forEach(input => {
+            if (input.checked) {
+                ratingSelected = true;
+            }
+        });
+
+        if (!ratingSelected) {
+            event.preventDefault(); // 
+            ratingError.style.display = 'block'; 
+        }
+    }
+</script>

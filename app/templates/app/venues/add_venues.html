@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva Ubicación{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm my-4">
+                <div class="card-body p-4">
+                    <h1 class="mb-4">Nueva Ubicación</h1>
+                    
+                    {% if errors %}
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            {% for field, error in errors.items %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
+                    <form method="POST" action="{% url 'venue_create' %}">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="location_name" class="form-label">Nombre de la ubicación *</label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="location_name" 
+                                name="location_name" 
+                                placeholder="Ej: Estadio Nacional" 
+                                value="{{ data.location_name|default:'' }}"
+                                required
+                            >
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Dirección *</label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="address" 
+                                name="address" 
+                                placeholder="Ej: Av. Grecia 2001" 
+                                value="{{ data.address|default:'' }}"
+                                required
+                                >
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="city" class="form-label">Ciudad *</label>
+                                <input 
+                                type="text" 
+                                class="form-control" 
+                                id="city" 
+                                name="city" 
+                                placeholder="Ej: Chile" 
+                                value="{{ data.city|default:'' }}" 
+                                required
+                            >
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="capacity" class="form-label">Capacidad (número de personas) *</label>
+                            <input 
+                                type="number" 
+                                class="form-control" 
+                                id="capacity" 
+                                name="capacity" 
+                                placeholder="Ej: 1000" 
+                                value="{{ data.capacity|default:'' }}"
+                                min="1"
+                                required
+                            >
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="contact" class="form-label">Contacto *</label>
+                            <textarea 
+                                class="form-control" 
+                                id="contact" 
+                                name="contact" 
+                                rows="4" 
+                                placeholder="Describe las características principales de la ubicación..." 
+                                required
+                            >{{ data.contact|default:'' }}</textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary px-4">Crear Ubicación</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

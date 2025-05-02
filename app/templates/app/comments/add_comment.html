@@ -1,0 +1,44 @@
+{% block content %}
+<div>
+    <h5>Agregar un comentario</h5>
+    <form method="post" action="{% url 'add_comment' event.id %}">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="title" class="form-label"
+                >Título del comentario *</label
+            >
+            <input
+                type="text"
+                class="form-control"
+                id="title"
+                name="title"
+                placeholder="Escribe un título para tu comentario..."
+                value="{{ form_data.title|default:'' }}"
+                required
+            />
+            {% if errors.title %}
+            <div class="text-danger mt-1">{{ errors.title }}</div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="text" class="form-label"
+                >Contenido del comentario *</label
+            >
+            <textarea
+                class="form-control"
+                id="text"
+                name="text"
+                rows="3"
+                placeholder="Escribe tu comentario aquí..."
+                required
+            >{{ form_data.text|default:'' }}</textarea>
+            {% if errors.text %}
+            <div class="text-danger mt-1">{{ errors.text }}</div>
+            {% endif %}
+        </div>
+        <button type="submit" class="btn btn-primary">
+            Publicar comentario
+        </button>
+    </form>
+</div>
+{% endblock %}
