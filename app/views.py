@@ -66,7 +66,7 @@ def events(request):
     if date_filter:
         try:
             date_filter = datetime.strptime(date_filter, '%Y-%m-%d').date()
-            events = Event.objects.filter(scheduled_at__date=date_filter).order_by("scheduled_at")
+            events = Event.objects.filter(scheduled_at__date__gte=date_filter).order_by("scheduled_at")
         except ValueError:
             events = Event.objects.all().order_by("scheduled_at")
     else:
