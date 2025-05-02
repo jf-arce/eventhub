@@ -66,8 +66,11 @@ def events(request):
     date_filter = request.GET.get('date')
     category_filter = request.GET.get('category')
     venue_filter = request.GET.get('venue')
-    
-    events = Event.objects.all()
+
+    if request.user.is_organizer:
+        events = Event.objects.filter(organizer=request.user)
+    else:
+        events = Event.objects.all()
     
     if date_filter:
         try:
