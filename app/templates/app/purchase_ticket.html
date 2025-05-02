@@ -163,6 +163,27 @@
                             .addEventListener("submit", function (event) {
                                 event.preventDefault();
 
+                                const fechaExpiracion = new Date(
+                                    document.getElementById(
+                                        "fechaExpiracion"
+                                    ).value
+                                );
+                                const hoy = new Date();
+
+                                fechaExpiracion.setHours(0, 0, 0, 0);
+                                hoy.setHours(0, 0, 0, 0);
+
+                                if (
+                                    !fechaExpiracion ||
+                                    fechaExpiracion <= hoy
+                                ) {
+                                    Swal.fire({
+                                        icon: "error",
+                                        title: "Error",
+                                        text: "La fecha de expiración debe ser posterior a la fecha actual",
+                                    });
+                                    return;
+                                }
                                 const numeroTarjeta = document
                                     .getElementById("numeroTarjeta")
                                     .value.replace(/\s/g, "");
