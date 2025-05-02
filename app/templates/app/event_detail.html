@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container">
+<div class="container py-5">
     <div class="row">
         <div class="d-flex justify-content-between align-items-center">
             <h1>{{ event.title }}</h1>
@@ -15,9 +15,16 @@
                 </a>
             {% endif %}
         </div>
+
+        <div class="d-flex justify-content-end gap-2 mb-3 mt-2">
+            <a href="{% url 'purchase_ticket' event.id %}" class="btn btn-sm btn-outline-primary px-3 py-1">
+                Comprar Entrada
+            </a>
+        </div>
     </div>
+
     <div class="row">
-        <div class="card">
+        <div class="card mt-2">
             <div class="card-body">
                 <h5 class="card-title">Detalles del Evento</h5>
                 <p class="card-text">{{ event.description }}</p>
@@ -40,9 +47,89 @@
                             <p class="mb-0">{{ event.organizer }}</p>
                         </div>
                     </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-light rounded-circle p-2 me-3">
+                            <i class="bi bi-tag text-primary"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Categoria</h6>
+                            <span style="background-color: #f0f2f5; border-radius: 8px; padding: 3px 8px; display: inline-block; font-size: 0.8em;">
+                                <p class="mb-0">{{ event.category.name }}</p>
+                            </span>
+                        </div>
+                    </div>
+                    {% if event.venue %}
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-light rounded-circle p-2 me-3">
+                            <i class="bi bi-geo-alt text-primary"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Ubicación</h6>
+                            <p class="mb-0">{{ event.venue.name }}, {{ event.venue.address }}, {{ event.venue.city }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
+
+        <!-- Sección de calificaciones y reseñas -->
+        {% include "app/rating/ratings_section.html" %}
     </div>
+    {% include 'app/comments/event_comments.html' with comments=comments%}
 </div>
+
+<style>
+    .rating {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        width: fit-content;
+        margin-top: 5px;
+    }
+    .rating input {
+        display: none;
+    }
+    .rating label {
+        cursor: pointer;
+        font-size: 1.5rem;
+        color: #ddd;
+        margin-right: 5px;
+    }
+    .rating label:hover,
+    .rating label:hover ~ label,
+    .rating input:checked ~ label {
+        color: #ffc107;
+    }
+    
+    /* Add styles for form fields */
+    #id_title {
+        display: block;
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+    }
+    
+    #id_text {
+        display: block;
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        min-height: 100px;
+    }
+</style>
 {% endblock %}

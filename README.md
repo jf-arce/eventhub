@@ -5,6 +5,10 @@ Aplicaci√≥n web para venta de entradas utilizada en la cursada 2025 de Ingenier√
 # Integrantes
 
 - Jose Francisco Arce
+- Joaquin Botteri
+- Oriana Intendente Monaldi
+- Mateo Polci
+- Hilario Carreon
 
 ## Dependencias
 

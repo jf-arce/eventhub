@@ -1,6 +1,5 @@
 from django.contrib.auth.views import LogoutView
 from django.urls import path
-
 from . import views
 
 urlpatterns = [
@@ -14,9 +13,30 @@ urlpatterns = [
     path("events/<int:id>/", views.event_detail, name="event_detail"),
     path("events/<int:id>/delete/", views.event_delete, name="event_delete"),
     path("events/<int:id>/users/", views.events_users, name="events_users"),
+    path('events/<int:event_id>/purchase/', views.purchase_ticket, name='purchase_ticket'),
+    path('events/<int:event_id>/viewTickets/', views.view_ticket, name='view_ticket'),
+    path('events/<int:event_id>/edit_ticket/<int:ticket_id>/', views.edit_ticket, name='edit_ticket'),
+    path("events/<int:event_id>/rating/add/", views.add_rating, name="add_rating"),
+    path("events/<int:event_id>/rating/edit/", views.edit_rating, name="edit_rating"),
+    path("events/<int:event_id>/rating/update/", views.update_rating, name="update_rating"),
+    path("events/<int:event_id>/rating/delete/", views.delete_rating, name="delete_rating"),
+    path('events/comments/<int:id>/delete', views.event_comment_delete, name='event_comment_delete'),
     path("notifications/", views.notifications, name="notifications"),
     path("notifications/<int:id>/", views.notification_detail, name="notification_detail"),
     path("notifications/<int:id>/delete/", views.notification_delete, name="notification_delete"),
     path("notifications/create/", views.notification_form, name="notification_form"),
     path("notifications/<int:id>/update/", views.notification_update, name="notification_update"),
+    path("comments/", views.comments, name="comments"),
+    path("comments/<int:id>/delete/", views.comment_delete, name="comment_delete"),
+    path("comments/<int:event_id>/addComment/", views.add_comment, name="add_comment"),
+    path('comments/<int:id>/update', views.comment_update, name='comment_update'),
+    path("categorys/", views.categorys, name="categorys"),
+    path("category/create/", views.category_form, name="category_form"),
+    path("categorys/<int:id>/edit/", views.category_form, name="category_edit"),
+    path("category/delete/<int:category_id>/", views.category_delete, name="category_delete"),
+    path("category/<int:id>/", views.category_detail, name="category_detail"),
+    path("venues/", views.venues, name="venues"),
+    path("venues/create/", views.venue_create, name="venue_create"),
+    path("venues/<int:id>/delete/", views.venue_delete, name="venue_delete"),
+    path("venues/<int:id>/edit/", views.venue_edit, name="venue_edit"),
 ]
