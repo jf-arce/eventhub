@@ -30,15 +30,19 @@
                             {% csrf_token %}
                             <div class="vstack gap-3">
                                 {% if errors %}
-                                    <div class="alert alert-danger">
-                                        <ul>
+                                <div class="alert alert-danger">
+                                    <ul>
+                                        {% if errors.ticket_code %}
+                                            <li><strong>Error:</strong> {{ errors.ticket_code }}</li>
+                                        {% else %}
                                             {% for field, error_list in errors.items %}
                                                 {% for error in error_list %}
                                                     <li><strong>{{ field|capfirst }}:</strong> {{ error }}</li>
                                                 {% endfor %}
                                             {% endfor %}
-                                        </ul>
-                                    </div>
+                                        {% endif %}
+                                    </ul>
+                                </div>
                                 {% endif %}
                                 <div class="mb-3">
                                     <label for="ticket_code" class="form-label">Código de ticket</label>

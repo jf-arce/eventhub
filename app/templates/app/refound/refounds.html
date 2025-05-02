@@ -32,18 +32,12 @@
                     {% if refound.approved == Null %}
                         <td><span class="badge bg-warning text-dark">Pendiente</span></td>
                     {% elif refound.approved == True %}
-                        <td><span class="badge bg-success text-dark">Aprovado</span></td>
+                        <td><span class="badge bg-success text-dark">Aprobado</span></td>
                     {% else %}
                         <td><span class="badge bg-danger text-dark">Rechazado</span></td>
                     {% endif %}
                     <td>
                         <div class="hstack gap-1">
-                        {% comment %} <a href="{% url 'refound_edit' refound.id %}"
-                            class="btn btn-sm btn-outline-secondary"
-                            aria-label="Editar"
-                            title="Editar">
-                            <i class="bi bi-pencil" aria-hidden="true"></i>
-                        </a> {% endcomment %}
                         <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editRefoundModal{{ refound.id }}" aria-label="Editar" title="Editar">
                             <i class="bi bi-pencil" aria-hidden="true"></i>
                         </button>

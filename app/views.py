@@ -8,6 +8,8 @@ from .models import Event, User, Rating, Ticket, Comment, Category, Venue, Refou
 from .forms import RatingForm 
 from django.db.models import Count
 from django.db.models.deletion import ProtectedError
+from datetime import timedelta
+from django.utils import timezone
 
 def register(request):
     if request.method == "POST":
@@ -691,6 +693,22 @@ def refound_request(request, id=None):
                 user_enconrtado = ticket_encontrado.user
                 evento_asociado = ticket_encontrado.event
 
+                # Valido que el reembolso sea dentro de los 30 dias despues de la fecha del evento
+                fecha_limite_reembolso = evento_asociado.scheduled_at + timedelta(days=30)
+                ahora = timezone.now()
+                if ahora > fecha_limite_reembolso:
+                    errors["ticket_code"] = "Han pasado más de 30 días desde la fecha del evento. No se puede solicitar un reembolso."
+                    return render(
+                        request,
+                        "app/refound/refound_request.html",
+                        {
+                            "errors": errors,
+                            "refound_request": {"ticket_code": ticket_code, "reason": reason},
+                            "user_is_organizer": user.is_organizer,
+                            "organizer_events": organizer_events,
+                        },
+                    )
+
                 success, possible_errors = RefoundRequest.new(ticket_code, reason, user_enconrtado, evento_asociado)
 
                 if possible_errors is not None:
@@ -701,7 +719,7 @@ def refound_request(request, id=None):
                         "app/refound/refound_request.html",
                         {
                             "errors": errors,
-                            "refound_request": {},
+                            "refound_request": {"ticket_code": ticket_code, "reason": reason},
                             "user_is_organizer": user.is_organizer,
                             "organizer_events": organizer_events,
                         },
@@ -718,7 +736,7 @@ def refound_request(request, id=None):
             "app/refound/refound_request.html",
             {
                 "errors": errors,
-                "refound_request": {},
+                "refound_request": {"ticket_code": ticket_code, "reason": reason},
                 "user_is_organizer": user.is_organizer,
                 "organizer_events": organizer_events,
             },
