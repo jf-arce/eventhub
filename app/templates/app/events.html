@@ -18,10 +18,8 @@
     </div>
 
     <form method="get" class="mb-4 row g-3 align-items-end">
-        <div class="col-auto">
-            <label for="date" class="form-label"
-                >Filtrar desde fecha:</label
-            >
+        <div class="col-md-3">
+            <label for="date" class="form-label">Filtrar desde fecha:</label>
             <input
                 type="date"
                 name="date"
@@ -30,12 +28,32 @@
                 value="{{ selected_date|date:'Y-m-d' }}"
             />
         </div>
-        <div class="col-auto">
-            <button type="submit" class="btn btn-primary">Filtrar</button>
-            {% if selected_date %}
-            <a href="{% url 'events' %}" class="btn btn-secondary"
-                >Ver todos</a
-            >
+        <div class="col-md-3">
+            <label for="category" class="form-label">Filtrar por categoría:</label>
+            <select name="category" id="category" class="form-select">
+                <option value="">Todas las categorías</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"i" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="venue" class="form-label">Filtrar por ubicación:</label>
+            <select name="venue" id="venue" class="form-select">
+                <option value="">Todas las ubicaciones</option>
+                {% for venue in venues %}
+                    <option value="{{ venue.id }}" {% if selected_venue == venue.id|stringformat:"i" %}selected{% endif %}>
+                        {{ venue.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary me-2">Aplicar filtros</button>
+            {% if selected_date or selected_category or selected_venue %}
+            <a href="{% url 'events' %}" class="btn btn-secondary">Limpiar filtros</a>
             {% endif %}
         </div>
     </form>

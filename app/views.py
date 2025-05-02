@@ -62,15 +62,28 @@ def home(request):
 @login_required
 def events(request):
     date_filter = request.GET.get('date')
+    category_filter = request.GET.get('category')
+    venue_filter = request.GET.get('venue')
+    
+    events = Event.objects.all()
     
     if date_filter:
         try:
             date_filter = datetime.strptime(date_filter, '%Y-%m-%d').date()
-            events = Event.objects.filter(scheduled_at__date__gte=date_filter).order_by("scheduled_at")
+            events = events.filter(scheduled_at__date__gte=date_filter)
         except ValueError:
-            events = Event.objects.all().order_by("scheduled_at")
-    else:
-        events = Event.objects.all().order_by("scheduled_at")
+            pass
+    
+    if category_filter:
+        events = events.filter(category_id=category_filter)
+    
+    if venue_filter:
+        events = events.filter(venue_id=venue_filter)
+    
+    events = events.order_by("scheduled_at")
+    
+    categories = Category.objects.filter(is_active=True)
+    venues = Venue.objects.all().order_by('name')
 
     return render(
         request,
@@ -78,7 +91,11 @@ def events(request):
         {
             "events": events, 
             "user_is_organizer": request.user.is_organizer,
-            "selected_date": date_filter if date_filter else ''
+            "selected_date": date_filter if date_filter else '',
+            "selected_category": category_filter,
+            "selected_venue": venue_filter,
+            "categories": categories,
+            "venues": venues
         },
     )
 
