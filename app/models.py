@@ -115,7 +115,7 @@ class Event(models.Model):
         return self.title
 
     @classmethod
-    def validate(cls, title, description, scheduled_at, venue):
+    def validate(cls, title, description, scheduled_at, venue, category):
         errors = {}
 
         if title == "":
@@ -126,6 +126,9 @@ class Event(models.Model):
         
         if venue is None:
             errors["venue"] = "Por favor seleccione una ubicación"
+
+        if category is None:
+            errors["category"] = "Por favor seleccione una categoría"
         
         if scheduled_at:
             buenos_aires_tz = timezone.get_fixed_timezone(-3 * 60) # UTC-3 de Buenos Aires
@@ -143,7 +146,7 @@ class Event(models.Model):
 
     @classmethod
     def new(cls, title, description, scheduled_at, organizer, category, venue=None):
-        errors = Event.validate(title, description, scheduled_at, venue)
+        errors = Event.validate(title, description, scheduled_at, venue, category)
 
         if len(errors.keys()) > 0:
             return False, errors
