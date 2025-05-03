@@ -2,7 +2,8 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
-from datetime import datetime
+from datetime import datetime, timedelta
+from django.utils import timezone
 
 class User(AbstractUser):
     is_organizer = models.BooleanField(default=False)
@@ -126,6 +127,18 @@ class Event(models.Model):
         if venue is None:
             errors["venue"] = "Por favor seleccione una ubicación"
         
+        if scheduled_at:
+            buenos_aires_tz = timezone.get_fixed_timezone(-3 * 60) # UTC-3 de Buenos Aires
+            
+            now_in_ba = timezone.now().astimezone(buenos_aires_tz)
+            today = now_in_ba.replace(hour=0, minute=0, second=0, microsecond=0)
+            tomorrow = today + timedelta(days=1)
+            
+            scheduled_at_in_ba = scheduled_at.astimezone(buenos_aires_tz)
+            
+            if scheduled_at_in_ba < tomorrow:
+                errors["date"] = "La fecha del evento debe ser posterior al día de hoy"
+
         return errors
 
     @classmethod
