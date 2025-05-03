@@ -5,7 +5,8 @@
 {% block content %}
 
 <div class="container mt-5">
-    {% if not user_is_organizer and not user_is_superuser%}
+    {% if not user_is_organizer and not user_is_superuser %}
+        <!-- Formulario de solicitud -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>Solicitar Reembolso</h1>
             <a
@@ -104,6 +105,7 @@
             </div>
         </div>
     {% else %}
+        <!-- Tabla de solicitudes -->
         <h1 class="mb-4">Solicitudes de Reembolso</h1>
         <div class="card">
             <div class="card-body">
@@ -118,9 +120,8 @@
                             <th>Acciones</th>
                         </tr>
                     </thead>
-                    {% for refound in organizer_events %}
-
                     <tbody>
+                    {% for refound in organizer_events %}
                         <tr>
                             <td>
                                 <a href="#" class="text-primary">{{ refound.ticket_code }}</a>
@@ -128,10 +129,10 @@
                             <td>{{ refound.event.title }}</td>
                             <td>{{ refound.user.username }}</td>
                             <td>{{ refound.created_at }}</td>
-                            {% if refound.approved == Null %}
+                            {% if refound.approved == None %}
                                 <td><span class="badge bg-warning text-dark">Pendiente</span></td>
                             {% elif refound.approved == True %}
-                                <td><span class="badge bg-success text-dark">Aprovado</span></td>
+                                <td><span class="badge bg-success text-dark">Aprobado</span></td>
                             {% else %}
                                 <td><span class="badge bg-danger text-dark">Rechazado</span></td>
                             {% endif %}
@@ -156,6 +157,7 @@
                         </tr>
                     </tbody>
                     {% endfor %}
+                    </tbody>
                 </table>
             </div>
         </div>

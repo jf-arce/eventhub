@@ -17,6 +17,12 @@
         {% endif %}
     </div>
 
+    {% if user_is_organizer %}
+    <div class="alert alert-info mb-4">
+        <i class="bi bi-info-circle me-2"></i> Como organizador, solo puedes ver los eventos que has creado.
+    </div>
+    {% endif %}
+
     <form method="get" class="mb-4 row g-3 align-items-end">
         <div class="col-md-3">
             <label for="date" class="form-label">Filtrar desde fecha:</label>
@@ -62,9 +68,10 @@
         <thead>
             <tr>
                 <th>Nombre</th>
-                <th>Descripcion</th>
                 <th>Fecha</th>
-                <th>Categoria</th>
+                <th>Categoría</th>
+                <th>Ubicación</th>
+                <th>Organizador</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -72,13 +79,14 @@
             {% for event in events%}
                 <tr>
                     <td>{{ event.title }}</td>
-                    <td>{{ event.description }}</td>
                     <td>{{ event.scheduled_at|date:"d b Y, H:i" }}</td>
                     <td>
                         <span style="background-color: #f0f2f5; border-radius: 8px; padding: 3px 8px; display: inline-block; font-size: 0.8em;">
                             {{ event.category.name }}
                         </span>
                     </td>
+                    <td>{{ event.venue.name }}</td>
+                    <td>{{ event.organizer.username }}</td>
                     <td>
                         <div class="hstack gap-1">
                             <a href="{% url 'event_detail' event.id %}"
@@ -118,7 +126,7 @@
                 </tr>
             {% empty %}
             <tr>
-                <td colspan="5" class="text-center">
+                <td colspan="6" class="text-center">
                     No hay eventos disponibles
                 </td>
             </tr>

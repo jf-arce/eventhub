@@ -66,8 +66,11 @@ def events(request):
     date_filter = request.GET.get('date')
     category_filter = request.GET.get('category')
     venue_filter = request.GET.get('venue')
-    
-    events = Event.objects.all()
+
+    if request.user.is_organizer:
+        events = Event.objects.filter(organizer=request.user)
+    else:
+        events = Event.objects.all()
     
     if date_filter:
         try:
@@ -209,11 +212,41 @@ def event_form(request, id=None):
             datetime(int(year), int(month), int(day), int(hour), int(minutes))
         )
 
-        category = get_object_or_404(Category, pk=category_id)
-        venue = get_object_or_404(Venue, pk=venue_id)
+        errors = {}
+        
+        try:
+            category = Category.objects.get(pk=category_id)
+        except Category.DoesNotExist:
+            errors["category"] = "La categoría seleccionada no existe"
+            category = None
+
+        try:
+            venue = Venue.objects.get(pk=venue_id)
+        except Venue.DoesNotExist:
+            errors["venue"] = "La ubicación seleccionada no existe"
+            venue = None
+            
+        if errors:
+            venues = Venue.objects.all().order_by('name')
+            categorys = Category.objects.filter(is_active=True)
+            return render(
+                request,
+                "app/event_form.html",
+                {
+                    "event": {
+                        "title": title,
+                        "description": description,
+                        "scheduled_at": f"{date} {time}",
+                    }, 
+                    "errors": errors,
+                    "user_is_organizer": request.user.is_organizer,
+                    "venues": venues,
+                    "categorys": categorys,
+                },
+            )
         
         if id is None:
-            success, errors = Event.new(title, description, scheduled_at, request.user, category, venue)
+            success, event_errors = Event.new(title, description, scheduled_at, request.user, category, venue)
             if not success:
                 venues = Venue.objects.all().order_by('name')
                 return render(
@@ -226,7 +259,7 @@ def event_form(request, id=None):
                             "scheduled_at": scheduled_at,
                             "venue": venue,
                         }, 
-                        "errors": errors,
+                        "errors": event_errors,
                         "user_is_organizer": request.user.is_organizer,
                         "venues": venues,
                         "categorys": Category.objects.filter(is_active=True),
@@ -773,7 +806,9 @@ def refound_request(request, id=None):
             },
         )
 
-    if user.is_organizer:
+    if user.is_superuser:
+        organizer_events = RefoundRequest.objects.all()
+    elif user.is_organizer:
         organizer_events = RefoundRequest.objects.filter(event__organizer=user)
 
     return render(
@@ -782,6 +817,7 @@ def refound_request(request, id=None):
         {
             "refound_request": refound_request_single,
             "user_is_organizer": user.is_organizer,
+            "user_is_superuser": user.is_superuser,
             "organizer_events": organizer_events,
         },
     )
@@ -863,13 +899,20 @@ def accept_reject_refound_request(request, refound_id, action):
 @login_required
 def refounds(request):
     user = request.user
-    refounds_by_user = RefoundRequest.objects.filter(user=user)
+    if user.is_superuser:
+        refounds_by_user = RefoundRequest.objects.all()
+    elif user.is_organizer:
+        refounds_by_user = RefoundRequest.objects.filter(event__organizer=user)
+    else:
+        refounds_by_user = RefoundRequest.objects.filter(user=user)
 
     return render(
         request,
         "app/refound/refounds.html",
         {
             "refounds_by_user": refounds_by_user,
+            "user_is_organizer": user.is_organizer,
+            "user_is_admin": user.is_superuser,
         },
     )
 
