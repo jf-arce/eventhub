@@ -253,8 +253,8 @@ class Comment(models.Model):
     title = models.CharField(max_length=200)
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="user_comments")
-    event = models.ForeignKey(Event, on_delete=models.PROTECT, related_name="event_comments")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_comments")
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="event_comments")
     
     def __str__(self):
         return self.title

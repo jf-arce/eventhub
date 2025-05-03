@@ -16,11 +16,16 @@
             Crear Notificación
         </a>
     </div>
-    
+
     <script>
         function verificarEventos(eventsNotFound) {
             if (eventsNotFound) {
-                alert("No hay eventos disponibles para crear notificaciones.");
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No hay eventos disponibles',
+                    text: 'No puedes crear notificaciones porque no hay eventos disponibles.',
+                    confirmButtonText: 'Aceptar'
+                });
                 return false;
             }
             return true;
@@ -106,9 +111,9 @@
                             <i class="bi bi-pencil"></i>
                         </button>
                         
-                        <form action="{% url 'notification_delete' notification.id %}" method="post" style="display:inline;">
+                        <form action="{% url 'notification_delete' notification.id %}" method="post" class="delete-form" style="display:inline;">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Estás seguro que quieres eliminar esta notificación?')">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>
@@ -160,4 +165,30 @@
         </tbody>
     </table>
 </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const deleteForms = document.querySelectorAll(".delete-form");
+
+        deleteForms.forEach(form => {
+            form.addEventListener("submit", function (e) {
+                e.preventDefault(); // Evita el envío inmediato
+
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "Esta acción no se puede deshacer.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit(); // Enviar si confirma
+                    }
+                });
+            });
+        });
+    });
+</script>
 {% endblock %}
