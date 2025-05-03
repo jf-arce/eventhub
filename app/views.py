@@ -773,7 +773,9 @@ def refound_request(request, id=None):
             },
         )
 
-    if user.is_organizer:
+    if user.is_superuser:
+        organizer_events = RefoundRequest.objects.all()
+    elif user.is_organizer:
         organizer_events = RefoundRequest.objects.filter(event__organizer=user)
 
     return render(
@@ -782,6 +784,7 @@ def refound_request(request, id=None):
         {
             "refound_request": refound_request_single,
             "user_is_organizer": user.is_organizer,
+            "user_is_superuser": user.is_superuser,
             "organizer_events": organizer_events,
         },
     )
@@ -829,13 +832,20 @@ def accept_reject_refound_request(request, refound_id, action):
 @login_required
 def refounds(request):
     user = request.user
-    refounds_by_user = RefoundRequest.objects.filter(user=user)
+    if user.is_superuser:
+        refounds_by_user = RefoundRequest.objects.all()
+    elif user.is_organizer:
+        refounds_by_user = RefoundRequest.objects.filter(event__organizer=user)
+    else:
+        refounds_by_user = RefoundRequest.objects.filter(user=user)
 
     return render(
         request,
         "app/refound/refounds.html",
         {
             "refounds_by_user": refounds_by_user,
+            "user_is_organizer": user.is_organizer,
+            "user_is_admin": user.is_superuser,
         },
     )
 
