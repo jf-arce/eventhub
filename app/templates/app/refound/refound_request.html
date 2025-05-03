@@ -7,7 +7,7 @@
 <div class="container mt-5">
     {% if not user_is_organizer and not user_is_superuser %}
         <!-- Formulario de solicitud -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-center my-4">
             <h1>Solicitar Reembolso</h1>
             <a
                 href="{% url 'refounds' %}"
@@ -138,9 +138,6 @@
                             {% endif %}
                             <td>
                                 <div class="btn-group">
-                                    <a href="#" class="btn btn-sm btn-outline-info me-1" title="Ver detalles">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
                                     <a href="{% url 'accept_reject_refound_request' refound_id=refound.id action='approve' %}" class="btn btn-sm btn-outline-success me-1" title="Aprobar">
                                         <i class="bi bi-check"></i>
                                     </a>

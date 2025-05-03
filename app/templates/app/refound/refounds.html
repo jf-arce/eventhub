@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center my-4">
         <h1>Mis Reembolsos</h1>
     </div>
     <table class="table">
@@ -23,7 +23,7 @@
             {% for refound in refounds_by_user%}
                 <tr>
                     <td>
-                        <a href="#" class="text-primary">{{ refound.ticket_code }}</a>
+                        <span class="text-black">{{ refound.ticket_code }}</span>
                     </td>
                     <td>{{ refound.event.title }}</td>
                     <td>{{ refound.reason }}</td>
