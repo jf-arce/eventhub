@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Notificaciones{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center my-4">
+        <h1>Gestión de Notificaciones</h1>
+    
+        <a 
+            href="{% if not events_not_found %}{% url 'notification_form' %}{% else %}#{% endif %}" 
+            class="btn btn-primary"
+            onclick="return verificarEventos({{ events_not_found|yesno:'true,false' }});"
+        >
+            <i class="bi bi-plus-circle me-2" aria-hidden="true"></i>
+            Crear Notificación
+        </a>
+    </div>
+
+    <script>
+        function verificarEventos(eventsNotFound) {
+            if (eventsNotFound) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No hay eventos disponibles',
+                    text: 'No puedes crear notificaciones porque no hay eventos disponibles.',
+                    confirmButtonText: 'Aceptar'
+                });
+                return false;
+            }
+            return true;
+        }
+    </script>
+
+    <div class="card mb-4 p-3">
+        <form method="get" class="row g-2">
+            <div class="col-md-4">
+                <input type="text" name="search" class="form-control" placeholder="Buscar notificaciones..." value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-3">
+                <select name="event" class="form-select">
+                    <option value="">Todos los eventos</option>
+                    {% for event in events %}
+                        <option value="{{ event.id }}" {% if request.GET.event == event.id|stringformat:"s" %}selected{% endif %}>
+                            {{ event.title }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="priority" class="form-select">
+                    <option value="">Todas las prioridades</option>
+                    <option value="normal" {% if request.GET.priority == 'normal' %}selected{% endif %}>Normal</option>
+                    <option value="high" {% if request.GET.priority == 'high' %}selected{% endif %}>Alta</option>
+                    <option value="low" {% if request.GET.priority == 'low' %}selected{% endif %}>Baja</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">Filtrar</button>
+            </div>
+        </form>
+    </div>
+
+    <table class="table align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Título</th>
+                <th>Evento</th>
+                <th>Destinatarios</th>
+                <th>Prioridad</th>
+                <th>Fecha de envío</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for notification in notifications %}
+                <tr>
+                    <td>{{ notification.title }}</td>
+                    <td>
+                        <a href="{% url 'event_detail' notification.event.id %}" class="text-decoration-none">
+                            {{ notification.event.title }}
+                        </a>
+                    </td>
+                    <td>
+                        {% if notification.users.count == 1 %}
+                            <span class="badge bg-secondary">Usuario específico</span>
+                        {% else %}
+                            <span class="badge bg-info text-dark">Todos ({{ notification.users.count }})</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if notification.priority == 'high' %}
+                            <span class="badge bg-danger">Alta</span>
+                        {% elif notification.priority == 'low' %}
+                            <span class="badge bg-success">Baja</span>
+                        {% else %}
+                            <span class="badge bg-primary">Normal</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ notification.created_at|date:"d M Y, H:i" }}</td>
+                    <td class="d-flex gap-2">
+                        <a href="{% url 'notification_detail' notification.id %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <button 
+                            type="button" 
+                            class="btn btn-outline-warning btn-sm" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#exampleModal{{ notification.id }}"
+                        >
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        
+                        <form action="{% url 'notification_delete' notification.id %}" method="post" class="delete-form" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+
+                <div class="modal fade" id="exampleModal{{ notification.id }}" tabindex="-1" aria-labelledby="exampleModalLabel{{ notification.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalLabel{{ notification.id }}">
+                                    Editar Notificación
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form method="post" action="{% url 'notification_update' notification.id %}">
+                                    {% csrf_token %}
+                                    <div class="mb-3">
+                                        <label for="title" class="form-label">Título *</label>
+                                        <input type="text" class="form-control" id="title" name="title" value="{{ notification.title }}" placeholder="Escribe un título...">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="message" class="form-label">Mensaje *</label>
+                                        <textarea class="form-control" id="message" name="message" rows="3" placeholder="Escribe el mensaje aquí...">{{ notification.message }}</textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="priority" class="form-label">Prioridad *</label>
+                                        <select class="form-select" id="priority" name="priority">
+                                            <option value="normal" {% if notification.priority == 'normal' %}selected{% endif %}>Normal</option>
+                                            <option value="high" {% if notification.priority == 'high' %}selected{% endif %}>Alta</option>
+                                            <option value="low" {% if notification.priority == 'low' %}selected{% endif %}>Baja</option>
+                                        </select>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">No hay notificaciones disponibles</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const deleteForms = document.querySelectorAll(".delete-form");
+
+        deleteForms.forEach(form => {
+            form.addEventListener("submit", function (e) {
+                e.preventDefault(); // Evita el envío inmediato
+
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "Esta acción no se puede deshacer.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit(); // Enviar si confirma
+                    }
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -154,7 +154,40 @@ class Event(models.Model):
         if venue is not None:
             self.venue = venue
 
-        self.save()
+        self.save()        
+
+class Notification(models.Model):
+    class Priority(models.TextChoices):
+        HIGH = 'high', 'Alta'
+        NORMAL = 'normal', 'Normal'
+        LOW = 'low', 'Baja'
+        
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    priority = models.CharField(
+        max_length=10,
+        choices=Priority.choices,
+        default=Priority.LOW,
+    )
+    is_read = models.BooleanField(default=False)
+    users = models.ManyToManyField(User, related_name="notifications")
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="notifications")
+    
+    def __str__(self):
+        return self.title
+    
+    @classmethod
+    def validate(cls, title, message, priority):
+        errors = {}
+        
+        if message == "":
+            errors["message"] = "Por favor ingrese un mensaje"
+
+        if priority not in [cls.Priority.HIGH, cls.Priority.NORMAL, cls.Priority.LOW]:
+            errors["priority"] = "Prioridad no válida"
+
+        return errors
 
 class RefoundRequest(models.Model):
     approved = models.BooleanField(null=True, default=None)
@@ -264,8 +297,8 @@ class Comment(models.Model):
     title = models.CharField(max_length=200)
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="user_comments")
-    event = models.ForeignKey(Event, on_delete=models.PROTECT, related_name="event_comments")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_comments")
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="event_comments")
     
     def __str__(self):
         return self.title
@@ -276,7 +309,7 @@ class Comment(models.Model):
 
         if title == "":
             errors["title"] = "Por favor ingrese un titulo"
-
+            
         if text == "":
             errors["text"] = "Por favor ingrese un comentario"
 
@@ -352,7 +385,7 @@ class Rating(models.Model):
             return True, rating_instance
         except cls.DoesNotExist:
             return False, "No se encontró la calificación para actualizar."
-        
+
     @classmethod
     def filter_events(cls, date_filter=None):
         queryset = cls.objects.all()

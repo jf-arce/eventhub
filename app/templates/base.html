@@ -24,6 +24,7 @@
             background-size: cover;
         }
     </style>
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.19.1/dist/sweetalert2.min.css" rel="stylesheet">
 </head>
 
 <body class="d-flex flex-column min-vh-100 bg-light{% block body_class %}{% endblock %}">
@@ -56,19 +57,38 @@
                             <li class="nav-item">
                                 {% navbar_link 'refound_request' 'Reembolsos' %}
                             </li>
-                            {% if user.is_organizer or user.is_superuser %}
-                                <li class="nav-item">
-                                    {% navbar_link 'venues' 'Ubicaciones' %}
-                                </li>
-                                <li class="nav-item">
-                                    {% navbar_link 'comments' 'Comentarios' %}
-                                </li>
-                                <li class="nav-item">
-                                    {% navbar_link 'categorys' 'Categorias' %}
-                                </li>
+                            
+                            {% if not user.is_organizer or user.is_superuser %}  
+                            <li class="nav-item position-relative mx-3">
+                                <a class="nav-link" href="{% url 'user_notifications' %}">
+                                    <i class="bi bi-bell fs-5 position-relative">
+                                        {% if notificaciones_no_leidas > 0 %}
+                                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">
+                                                {{ notificaciones_no_leidas }}
+                                                <span class="visually-hidden">notificaciones no leídas</span>
+                                            </span>
+                                        {% endif %}
+                                    </i>
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            {% if user.is_organizer or user.is_superuser %} 
+                            <li class="nav-item">
+                                {% navbar_link 'comments' 'Comentarios' %}
+                            </li>
+                            <li class="nav-item">
+                                {% navbar_link 'notifications' 'Notificaciones' %}
+                            </li>
+                            <li class="nav-item">
+                                {% navbar_link 'categorys' 'Categorias' %}
+                            </li>
+                            <li class="nav-item">
+                                {% navbar_link 'venues' 'Ubicaciones' %}
+                            </li>
                             {% endif %}
                         </ul>
-                    </div>
+                    </div>                    
 
                     <form
                         class="d-flex"
@@ -104,5 +124,6 @@
     integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq"
     crossorigin="anonymous"
 ></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </html>

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle de Notificación{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h4 class="mb-0">{{ notification.title }}</h4>
+    </div>
+    <div class="card-body">
+      
+      <div class="mb-3">
+        <strong>Mensaje:</strong>
+        <p class="form-control-plaintext">{{ notification.message }}</p>
+      </div>
+      
+      <div class="mb-3">
+        <strong>Fecha de creación:</strong>
+        <span class="badge bg-light text-dark">{{ notification.created_at|date:"d/m/Y H:i" }}</span>
+      </div>
+      
+      <div class="mb-3">
+        <strong>Prioridad:</strong>
+        {% if notification.priority == "high" %}
+          <span class="badge bg-danger">Alta</span>
+        {% elif notification.priority == "normal" %}
+          <span class="badge bg-warning text-dark">Normal</span>
+        {% else %}
+          <span class="badge bg-success">Baja</span>
+        {% endif %}
+      </div>
+
+      <div class="mb-3">
+        <strong>Evento relacionado:</strong>
+        <span class="text-muted">{{ notification.event }}</span>
+      </div>
+
+      <div class="mb-3">
+        <strong>Usuarios destinatarios:</strong>
+        {% if notification.users.count == 1 %}
+          <span class="text-muted">{{ notification.users.first.username }}</span>
+        {% else %}
+          <ul class="list-group">
+            {% for user in notification.users.all %}
+              <li class="list-group-item">{{ user.username }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+
+      <a href="{% url 'notifications' %}" class="btn btn-dark mt-3">Volver a la lista</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -4,8 +4,9 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
+from django.http import JsonResponse
 from django.contrib import messages
-from .models import Event, User, Rating, Ticket, Comment, Category, Venue, RefoundRequest
+from .models import Event, User, Rating, Ticket, Comment, Category, Venue, RefoundRequest, Notification
 from .forms import RatingForm 
 from django.db.models import Count
 from django.db.models.deletion import ProtectedError
@@ -39,7 +40,6 @@ def register(request):
             return redirect("events")
 
     return render(request, "accounts/register.html", {})
-
 
 def login_view(request):
     if request.method == "POST":
@@ -785,6 +785,40 @@ def refound_request(request, id=None):
             "organizer_events": organizer_events,
         },
     )
+    
+def notifications(request):
+    user = request.user
+    events_not_found = not Event.objects.exists()
+
+    if not (user.is_organizer or user.is_superuser):
+        return redirect("events")
+
+    search_query = request.GET.get("search", "").strip()
+    event_filter = request.GET.get("event", "")
+    priority_filter = request.GET.get("priority", "")
+
+    notifications = Notification.objects.all().order_by("-created_at")
+
+    if search_query:
+        notifications = notifications.filter(title__icontains=search_query)
+
+    if event_filter:
+        notifications = notifications.filter(event__id=event_filter)
+
+    if priority_filter:
+        notifications = notifications.filter(priority=priority_filter)
+
+    events = Event.objects.all()
+
+    return render(
+        request,
+        "app/notifications/notifications.html",
+        {
+            "notifications": notifications,
+            "events_not_found": events_not_found,
+            "events": events,
+        },
+    )
 
 @login_required
 def refound_delete(request, refound_id):
@@ -853,3 +887,169 @@ def refound_edit(request, id):
     comment = get_object_or_404(RefoundRequest, pk=id)
     return redirect("refounds")
 
+@login_required
+def notification_delete(request, id):
+    user = request.user
+    
+    if not (user.is_organizer or user.is_superuser):
+        return redirect("events")
+    
+    if request.method == "POST":
+        notification = get_object_or_404(Notification, pk=id)
+        notification.delete()
+        return redirect("notifications")
+    
+    return redirect("notifications")
+
+@login_required
+def notification_detail(request, id):
+    user = request.user
+    
+    if not (user.is_organizer or user.is_superuser):
+        return redirect("events")
+    
+    notification = get_object_or_404(Notification, pk=id)
+    
+    return render(
+        request,
+        "app/notifications/notification_detail.html",
+        {
+            "notification": notification
+        },
+    )
+
+@login_required 
+def notification_form(request, id=None):
+    user = request.user
+
+    if not (user.is_organizer or user.is_superuser):
+        return redirect("events")
+    
+    if not Event.objects.exists():
+        messages.error(request, "No hay eventos disponibles para enviar notificaciones.")
+        return redirect("notifications")
+
+    if request.method == "POST":
+        title = request.POST.get("title")
+        message = request.POST.get("message")
+        priority = request.POST.get("priority")
+        event_id = request.POST.get("event")
+        destination = request.POST.get("destination")
+        
+        Notification.validate(title, message, priority)
+
+        event = get_object_or_404(Event, pk=event_id)
+        
+        if destination == "all":
+            # Obtener todos los usuarios con tickets para el evento
+            tickets = Ticket.objects.filter(event=event)
+            users = [ticket.user for ticket in tickets]
+
+            notification = Notification.objects.create(
+                title=title,
+                message=message,
+                priority=priority,
+                event=event,
+            )
+            notification.users.set(users)
+            
+
+        elif destination == "users":
+            user_id = request.POST.get("specific_user")
+            specific_user = get_object_or_404(User, pk=user_id)
+
+            notification = Notification.objects.create(
+                title=title,
+                message=message,
+                priority=priority,
+                event=event,
+            )
+            notification.users.add(specific_user)
+
+        return redirect("notifications")
+
+    notification = {}
+    if id is not None:
+        notification = get_object_or_404(Notification, pk=id)
+
+    events = Event.objects.all()
+    users = User.objects.all()
+
+    return render(
+        request,
+        "app/notifications/notification_form.html",
+        {
+            "notification": notification,
+            "events": events,
+            "users": users,
+            "priority": Notification.Priority,
+        },
+    )
+    
+@login_required
+def events_users(request, id):
+    print("Llamando a events_users con ID:", id)
+    event = get_object_or_404(Event, pk=id)
+    
+    tickets = Ticket.objects.filter(event=event)
+    users = [{"id": ticket.user.pk, "username": ticket.user.username} for ticket in tickets]
+
+    return JsonResponse({"usuarios": users})
+
+@login_required
+def notification_update(request, id):
+    user = request.user
+    
+    if not (user.is_organizer or user.is_superuser):
+        return redirect("events")
+    
+    if request.method == "POST":
+        title = request.POST.get("title")
+        message = request.POST.get("message")
+        priority = request.POST.get("priority")
+        
+        print(title, message, priority)
+
+        Notification.validate(title, message, priority)
+        
+        notification = get_object_or_404(Notification, pk=id)
+        
+        notification.title = title or notification.title
+        notification.message = message or notification.message
+        notification.priority = priority or notification.priority
+
+        notification.save()
+        
+        return redirect("notifications")
+
+    return redirect("notifications")
+        
+        
+@login_required
+def user_notifications(request):
+    user = request.user
+    notifications = Notification.objects.filter(users=user).order_by("-created_at")
+    unread_count = notifications.filter(is_read=False).count()
+    
+    return render(
+        request,
+        "app/notifications/user_notifications.html",
+        {
+            "notifications": notifications,
+            "unread_count": unread_count,
+        },
+    )
+    
+@login_required
+def mark_as_read(request, notif_id):
+    notif = get_object_or_404(Notification, id=notif_id, users=request.user)
+    notif.is_read = True
+    notif.save()
+    
+    return redirect('user_notifications')
+
+@login_required
+def mark_all_as_read(request):
+    request.user.notifications.filter(is_read=False).update(is_read=True)
+    
+    return redirect('user_notifications')
