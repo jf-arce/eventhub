@@ -204,6 +204,23 @@ class Notification(models.Model):
             errors["priority"] = "Prioridad no válida"
 
         return errors
+    
+    @classmethod
+    def notify_users_of_event_update(cls, event, message):
+        notification = cls.objects.create(
+            title="Cambios en el evento",
+            message=message,
+            priority= cls.Priority.LOW,
+            event=event
+        )
+        
+        # Encuentra todos los usuarios que tienen entradas para el evento
+        tickets = Ticket.objects.filter(event=event)
+        users = [ticket.user for ticket in tickets]
+        
+        notification.users.set(users)
+        notification.save()
+        return notification
 
 class RefoundRequest(models.Model):
     approved = models.BooleanField(null=True, default=None)
