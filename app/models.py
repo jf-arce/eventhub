@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from datetime import datetime, timedelta
 from django.utils import timezone
+from django.db.models import Avg
 
 class User(AbstractUser):
     is_organizer = models.BooleanField(default=False)
@@ -169,8 +170,13 @@ class Event(models.Model):
         self.organizer = organizer or self.organizer
         if venue is not None:
             self.venue = venue
-
         self.save()        
+
+    def average_rating(self):
+        avg = self.ratings.aggregate(avg=Avg('rating'))['avg']
+        if avg is not None:
+            return round(avg, 2)
+        return None
 
 class Notification(models.Model):
     class Priority(models.TextChoices):
