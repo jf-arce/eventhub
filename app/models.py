@@ -263,7 +263,7 @@ class Ticket(models.Model):
         return self.ticket_code
     
     @classmethod
-    def validate(cls, quantity, type):
+    def validate(cls, quantity, type, user=None, event=None):
         errors = {}
 
         if quantity == "":
@@ -279,11 +279,15 @@ class Ticket(models.Model):
         if type == "":
             errors["type"] = "Por favor ingrese el tipo de entrada"
     
+        if user and event and not errors.get('quantity'):
+            limit_errors = cls.validate_ticket_limit(user, event, quantity)
+            errors.update(limit_errors)
+
         return errors
     
     @classmethod
     def new(cls, buy_date, ticket_code, quantity, type, event, user):
-        errors = Ticket.validate(quantity, type)
+        errors = Ticket.validate(quantity, type, user, event)
 
         if len(errors.keys()) > 0:
             return False, errors
@@ -295,7 +299,6 @@ class Ticket(models.Model):
             type=type,
             event=event,
             user=user,
-
         )
 
         return True, None
@@ -307,6 +310,72 @@ class Ticket(models.Model):
         self.type = type or self.type
 
         self.save()
+
+    @classmethod
+    def validate_ticket_limit(cls, user, event, quantity):
+        """
+        Valida que un usuario no pueda comprar más de 4 entradas por evento.
+        """
+        errors = {}
+        try:
+            quantity = int(quantity)
+            
+            if quantity > 4:
+                errors['quantity'] = "No puedes comprar más de 4 entradas por evento (límite excedido)"
+                return errors
+            
+            current_count = cls.get_user_tickets_count(user, event)
+            
+            total = current_count + quantity
+            if total > 4:
+                errors['quantity'] = f"No puedes comprar más de 4 entradas por evento (ya has comprado {current_count}, lo que excedería el límite)"
+        except ValueError:
+            errors['quantity'] = "La cantidad debe ser un número válido"
+        
+        return errors
+
+    @classmethod
+    def get_user_tickets_count(cls, user, event):
+        """
+        Calcula el total de tickets que un usuario ya ha comprado para un evento.
+        """
+        from django.db.models import Sum
+        
+        result = cls.objects.filter(user=user, event=event).aggregate(
+            total=Sum('quantity')
+        )
+        
+        return result['total'] or 0
+    
+    @classmethod
+    def validate_ticket_edit_limit(cls, user, event, new_quantity, ticket_being_edited):
+        """
+        Valida que al editar un ticket, el usuario no exceda el límite de 4 entradas por evento.
+        Excluye el ticket que se está editando del conteo actual.
+        """
+        errors = {}
+        try:
+            new_quantity = int(new_quantity)
+            
+            if new_quantity > 4:
+                errors['quantity'] = "No puedes tener más de 4 entradas por evento (límite excedido)"
+                return errors
+            
+            current_count = cls.objects.filter(
+                user=user, 
+                event=event
+            ).exclude(
+                id=ticket_being_edited.id
+            ).aggregate(
+                total=models.Sum('quantity')
+            )['total'] or 0
+            
+            total = current_count + new_quantity
+            if total > 4:
+                errors['quantity'] = f"No puedes tener más de 4 entradas por evento, el total sería {total}"
+        except ValueError:
+            errors['quantity'] = "La cantidad debe ser un número válido"
+
             
 
 class Comment(models.Model):

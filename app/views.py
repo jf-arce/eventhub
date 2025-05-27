@@ -12,6 +12,7 @@ from django.db.models import Count
 from django.db.models.deletion import ProtectedError
 from datetime import timedelta
 from django.utils import timezone
+from django.db import models
 
 def register(request):
     if request.method == "POST":
@@ -439,6 +440,7 @@ def edit_ticket(request, event_id, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     
     if not (request.user == ticket.user or request.user == event.organizer):
+        messages.error(request, "No tienes permisos para editar este ticket")
         return redirect('events')
     
     if request.method == 'POST':
@@ -448,15 +450,40 @@ def edit_ticket(request, event_id, ticket_id):
         try:
             quantity = int(quantity)
             if quantity < 1:
-                raise ValueError("La cantidad debe ser mayor a 0")
+                messages.error(request, "La cantidad debe ser mayor a 0")
+                return render(request, 'app/edit_ticket.html', {
+                    'event': event,
+                    'ticket': ticket
+                })
+            
+            if not request.user.is_organizer:
+                validation_errors = Ticket.validate_ticket_edit_limit(
+                    user=ticket.user, 
+                    event=event, 
+                    new_quantity=quantity,
+                    ticket_being_edited=ticket
+                )
+                
+                if validation_errors:
+                    for error in validation_errors.values():
+                        messages.error(request, error)
+                    return render(request, 'app/edit_ticket.html', {
+                        'event': event,
+                        'ticket': ticket
+                    })
                 
             ticket.type = ticket_type
             ticket.quantity = quantity
             ticket.save()
+            messages.success(request, "Ticket actualizado exitosamente")
             return redirect('view_ticket', event_id=event_id)
             
         except ValueError:
-            pass
+            messages.error(request, "La cantidad debe ser un número válido")
+            return render(request, 'app/edit_ticket.html', {
+                'event': event,
+                'ticket': ticket
+            })
     
     return render(request, 'app/edit_ticket.html', {
         'event': event,
@@ -1096,3 +1123,57 @@ def mark_all_as_read(request):
     request.user.notifications.filter(is_read=False).update(is_read=True)
     
     return redirect('user_notifications')
+
+@login_required
+def check_ticket_limit(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    cantidad = int(request.GET.get('cantidad', 1))
+    
+    current_count = Ticket.get_user_tickets_count(user=request.user, event=event)
+    
+    success = (current_count + cantidad) <= 4
+    
+    return JsonResponse({
+        'success': success,
+        'current_count': current_count,
+        'total': current_count + cantidad,
+        'remaining': max(0, 4 - current_count)
+    })
+
+@login_required
+def check_ticket_limit_for_edit(request, event_id, ticket_id):
+    """
+    Endpoint AJAX para verificar límites al editar un ticket específico
+    """
+    event = get_object_or_404(Event, id=event_id)
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    cantidad = int(request.GET.get('cantidad', 1))
+    
+    if not (request.user == ticket.user or request.user == event.organizer):
+        return JsonResponse({'success': False, 'error': 'Sin permisos'})
+    
+    if request.user.is_organizer:
+        return JsonResponse({
+            'success': True,
+            'current_count': 0,
+            'total': cantidad,
+            'remaining': float('inf')
+        })
+    
+    current_count = Ticket.objects.filter(
+        user=ticket.user, 
+        event=event
+    ).exclude(
+        id=ticket.pk
+    ).aggregate(
+        total=models.Sum('quantity')
+    )['total'] or 0
+    
+    success = (current_count + cantidad) <= 4
+    
+    return JsonResponse({
+        'success': success,
+        'current_count': current_count,
+        'total': current_count + cantidad,
+        'remaining': max(0, 4 - current_count)
+    })
