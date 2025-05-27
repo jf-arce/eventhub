@@ -58,7 +58,7 @@
                                 {% navbar_link 'refound_request' 'Reembolsos' %}
                             </li>
                             
-                            {% if not user.is_organizer or user.is_superuser %}  
+                            {% if not user.is_organizer and not user.is_superuser %}  
                             <li class="nav-item position-relative mx-3">
                                 <a class="nav-link" href="{% url 'user_notifications' %}">
                                     <i class="bi bi-bell fs-5 position-relative">
