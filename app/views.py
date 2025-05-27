@@ -75,7 +75,7 @@ def events(request):
     if date_filter:
         try:
             date_filter = datetime.strptime(date_filter, '%Y-%m-%d').date()
-            events = events.filter(scheduled_at__date__gte=date_filter)
+            events = events.filter(scheduled_at_date_gte=date_filter)
         except ValueError:
             pass
     
@@ -103,7 +103,6 @@ def events(request):
             "venues": venues
         },
     )
-
 @login_required
 def event_detail(request, id):
     event = get_object_or_404(Event, id=id)
@@ -116,6 +115,27 @@ def event_detail(request, id):
     form = RatingForm()
     user_has_ticket = Ticket.objects.filter(event=event, user=request.user).exists()
     
+    today = timezone.now().date()
+    event_date = event.scheduled_at.date()
+    days_remaining = (event_date - today).days
+    
+    return render(
+        request,
+        'app/event_detail.html',
+        {
+            'event': event,
+            'form': form,
+            'ratings': ratings,
+            'user_rated': user_rated,
+            'editing': editing,
+            'user_has_ticket': user_has_ticket,  
+            "comments": comments,
+            "user_is_organizer": request.user == event.organizer, 
+            "user_is_admin": request.user.is_superuser,
+            'days_remaining': days_remaining,
+        }
+    )
+
     return render(
         request,
         'app/event_detail.html',
@@ -129,6 +149,7 @@ def event_detail(request, id):
             "comments": comments,
             "user_is_organizer": request.user.is_organizer,
             "user_is_admin": request.user.is_superuser,
+            'days_remaining': days_remaining,
         }
     )
 

@@ -2,7 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from django.utils import timezone
 
 class User(AbstractUser):
@@ -171,6 +171,45 @@ class Event(models.Model):
             self.venue = venue
 
         self.save()        
+
+    def days_until_event(self):
+        """
+        Calcula los días restantes hasta el evento.
+        Retorna:
+        - Número positivo: días que faltan
+        - 0: es hoy
+        - Número negativo: días desde que pasó el evento
+        """
+        if self.scheduled_at:
+            event_date = self.scheduled_at.date()
+            today = timezone.now().date()
+            delta = event_date - today
+            return delta.days
+        return None
+    
+    def get_countdown_status(self):
+        """
+        Retorna el estado del evento basado en la fecha.
+        """
+        days = self.days_until_event()
+        if days is None:
+            return "Sin fecha programada"
+        elif days > 1:
+            return f"Faltan {days} días"
+        elif days == 1:
+            return "Falta 1 día"
+        elif days == 0:
+            return "Es hoy"
+        else:
+            return "Evento finalizado"
+    
+    @property
+    def is_upcoming(self):
+        """
+        Propiedad que indica si el evento es próximo (no ha pasado).
+        """
+        days = self.days_until_event()
+        return days is not None and days >= 0
 
 class Notification(models.Model):
     class Priority(models.TextChoices):
