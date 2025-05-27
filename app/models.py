@@ -194,7 +194,7 @@ class Notification(models.Model):
         return self.title
     
     @classmethod
-    def validate(cls, title, message, priority):
+    def validate(cls, title, message, priority, event):
         errors = {}
         
         if message == "":
@@ -202,6 +202,14 @@ class Notification(models.Model):
 
         if priority not in [cls.Priority.HIGH, cls.Priority.NORMAL, cls.Priority.LOW]:
             errors["priority"] = "Prioridad no válida"
+            
+        if title is None or not str(title).strip():
+            errors["title"] = "El título no puede estar vacío."
+        elif len(title.strip()) > 200:
+            errors["title"] = "El título no puede superar los 200 caracteres."
+            
+        if cls.objects.filter(title=title.strip(), message=message.strip(), event=event).exists():
+            errors["duplicado"] = "Ya existe una notificación con el mismo título, mensaje y evento."
 
         return errors
 
