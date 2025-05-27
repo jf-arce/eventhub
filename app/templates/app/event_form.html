@@ -75,7 +75,7 @@
                                         id="time"
                                         required
                                         type="time"
-                                        value="{{ event.scheduled_at|date:'g:i'}}"
+                                        value="{{ event.scheduled_at|date:'H:i'}}"
                                         name="time" />
                                 </div>
                             </div>
@@ -98,7 +98,11 @@
                                 {% endif %}
                             </div>
                             <div>
-                                <button type="submit" class="btn btn-primary">Crear Evento</button>
+                                {% if event.id %}
+                                    <button type="submit" class="btn btn-primary">Editar Evento</button>
+                                {% else %}
+                                    <button type="submit" class="btn btn-primary">Crear Evento</button>
+                                {% endif %}
                             </div>
                         </div>
                     </form>
