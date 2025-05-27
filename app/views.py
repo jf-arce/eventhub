@@ -115,7 +115,8 @@ def event_detail(request, id):
     editing = False
     form = RatingForm()
     user_has_ticket = Ticket.objects.filter(event=event, user=request.user).exists()
-    
+    avg_rating = event.average_rating()
+
     return render(
         request,
         'app/event_detail.html',
@@ -129,6 +130,7 @@ def event_detail(request, id):
             "comments": comments,
             "user_is_organizer": request.user.is_organizer,
             "user_is_admin": request.user.is_superuser,
+            "avg_rating": avg_rating, 
         }
     )
 
