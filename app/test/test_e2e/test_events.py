@@ -40,7 +40,7 @@ class EventBaseTest(BaseE2ETest):
             city="Ciudad",
             capacity=100,
             contact="X")
-        event_date1 = timezone.make_aware(datetime.datetime(2025, 2, 10, 10, 10))
+        event_date1 = timezone.make_aware(datetime.datetime(2025, 9, 10, 10, 10))
         self.event1 = Event.objects.create(
             title="Evento de prueba 1",
             description="Descripción del evento 1",
@@ -51,8 +51,7 @@ class EventBaseTest(BaseE2ETest):
         )
 
         # Evento 2
-    
-        event_date2 = timezone.make_aware(datetime.datetime(2025, 3, 15, 14, 30))
+        event_date2 = timezone.make_aware(datetime.datetime(2025, 10, 15, 14, 30))
         self.event2 = Event.objects.create(
             title="Evento de prueba 2",
             description="Descripción del evento 2",
@@ -80,7 +79,7 @@ class EventBaseTest(BaseE2ETest):
         # Verificar datos del primer evento
         row0 = rows.nth(0)
         expect(row0.locator("td").nth(0)).to_have_text("Evento de prueba 1")
-        expect(row0.locator("td").nth(1)).to_have_text("10 feb 2025, 10:10")
+        expect(row0.locator("td").nth(1)).to_have_text("10 set 2025, 10:10")
         expect(row0.locator("td").nth(2)).to_have_text("General")
         expect(row0.locator("td").nth(3)).to_have_text("Teatro Central")
         expect(row0.locator("td").nth(4)).to_have_text("organizador")
@@ -88,7 +87,7 @@ class EventBaseTest(BaseE2ETest):
         # Verificar datos del segundo evento
         row1 = rows.nth(1)
         expect(row1.locator("td").nth(0)).to_have_text("Evento de prueba 2")
-        expect(row1.locator("td").nth(1)).to_have_text("15 mar 2025, 14:30")
+        expect(row1.locator("td").nth(1)).to_have_text("15 oct 2025, 14:30")
         expect(row1.locator("td").nth(2)).to_have_text("General")
         expect(row1.locator("td").nth(3)).to_have_text("Teatro Central")
         expect(row1.locator("td").nth(4)).to_have_text("organizador")
@@ -158,6 +157,7 @@ class EventDisplayTest(EventBaseTest):
 
     def test_events_page_regular_user(self):
         """Test que verifica la visualización de la página de eventos para un usuario regular"""
+
         # Iniciar sesión como usuario regular
         self.login_user("usuario", "password123")
 
@@ -240,10 +240,10 @@ class EventCRUDTest(EventBaseTest):
         expect(header).to_be_visible()
 
         # Completar el formulario
-        self.page.get_by_label("Título del Evento").fill("Evento de prueba E2E")
-        self.page.get_by_label("Descripción").fill("Descripción creada desde prueba E2E")
-        self.page.get_by_label("Fecha").fill("2025-06-15")
-        self.page.get_by_label("Hora").fill("16:45")
+        self.page.get_by_label("Título del Evento").fill("Evento de prueba 2")
+        self.page.get_by_label("Descripción").fill("Descripción creada desde prueba 2")
+        self.page.get_by_label("Fecha").fill("2025-10-15")
+        self.page.get_by_label("Hora").fill("14:30")
         self.page.get_by_label("Categoría").select_option(label="General")
         self.page.get_by_label("Ubicación").select_option(label="Teatro Central (Ciudad)")
 
@@ -251,15 +251,15 @@ class EventCRUDTest(EventBaseTest):
         self.page.get_by_role("button", name="Crear Evento").click()
 
         # Esperar a que el nuevo evento aparezca en la tabla
-        self.page.wait_for_selector("table tbody tr:has-text('Evento de prueba E2E')")
+        self.page.wait_for_selector("table tbody tr:has-text('Evento de prueba 2')")
 
         # Verificar que ahora hay 3 eventos
         rows = self.page.locator("table tbody tr")
         expect(rows).to_have_count(3)
 
         row = self.page.locator("table tbody tr").last
-        expect(row.locator("td").nth(0)).to_have_text("Evento de prueba E2E")
-        expect(row.locator("td").nth(1)).to_have_text("15 jun 2025, 16:45")
+        expect(row.locator("td").nth(0)).to_have_text("Evento de prueba 2")
+        expect(row.locator("td").nth(1)).to_have_text("15 oct 2025, 14:30")
         expect(row.locator("td").nth(2)).to_have_text("General")
         expect(row.locator("td").nth(3)).to_have_text("Teatro Central")
         expect(row.locator("td").nth(4)).to_have_text("organizador")
@@ -293,8 +293,8 @@ class EventCRUDTest(EventBaseTest):
         description.fill("Descripcion Editada")
 
         date = self.page.get_by_label("Fecha")
-        expect(date).to_have_value("2025-02-10")
-        date.fill("2025-04-20")
+        expect(date).to_have_value("2025-09-10")
+        date.fill("2025-11-20")
 
         time = self.page.get_by_label("Hora")
         expect(time).to_have_value("10:10")
@@ -310,7 +310,7 @@ class EventCRUDTest(EventBaseTest):
         # Verificar que el título y la fecha del evento han sido actualizados
         row = self.page.locator("table tbody tr").last
         expect(row.locator("td").nth(0)).to_have_text("Titulo editado")           # Nombre
-        expect(row.locator("td").nth(1)).to_have_text("20 abr 2025, 03:00")       # Fecha
+        expect(row.locator("td").nth(1)).to_have_text("20 nov 2025, 03:00")       # Fecha
         expect(row.locator("td").nth(2)).to_have_text("General")                  # Categoría
         expect(row.locator("td").nth(3)).to_have_text("Teatro Central")           # Ubicación
         expect(row.locator("td").nth(4)).to_have_text("organizador")              # Organizador
