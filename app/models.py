@@ -162,11 +162,17 @@ class Event(models.Model):
 
         return True, None
 
-    def update(self, title, description, scheduled_at, organizer, venue=None):
-        self.title = title or self.title
-        self.description = description or self.description
-        self.scheduled_at = scheduled_at or self.scheduled_at
-        self.organizer = organizer or self.organizer
+    def update(self, title=None, description=None, scheduled_at=None, organizer=None, category=None, venue=None):
+        if title is not None:
+            self.title = title
+        if description is not None:
+            self.description = description
+        if scheduled_at is not None:
+            self.scheduled_at = scheduled_at
+        if organizer is not None:
+            self.organizer = organizer
+        if category is not None:
+            self.category = category
         if venue is not None:
             self.venue = venue
 
