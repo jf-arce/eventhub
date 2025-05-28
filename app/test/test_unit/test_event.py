@@ -3,7 +3,7 @@ import datetime
 from django.test import TestCase
 from django.utils import timezone
 
-from app.models import Event, User
+from app.models import Event, User, Category, Venue
 
 
 class EventModelTest(TestCase):
@@ -14,6 +14,10 @@ class EventModelTest(TestCase):
             password="password123",
             is_organizer=True,
         )
+        self.category = Category.objects.create(name="Cat", description="desc")
+        self.venue = Venue.objects.create(
+            name="Venue", address="A", city="C", capacity=10, contact="X"
+        )
 
     def test_event_creation(self):
         event = Event.objects.create(
@@ -21,31 +25,41 @@ class EventModelTest(TestCase):
             description="Descripción del evento de prueba",
             scheduled_at=timezone.now() + datetime.timedelta(days=1),
             organizer=self.organizer,
+            category=self.category,
+            venue=self.venue,
         )
         """Test que verifica la creación correcta de eventos"""
         self.assertEqual(event.title, "Evento de prueba")
         self.assertEqual(event.description, "Descripción del evento de prueba")
         self.assertEqual(event.organizer, self.organizer)
+        self.assertEqual(event.category, self.category)
+        self.assertEqual(event.venue, self.venue)
         self.assertIsNotNone(event.created_at)
         self.assertIsNotNone(event.updated_at)
 
     def test_event_validate_with_valid_data(self):
         """Test que verifica la validación de eventos con datos válidos"""
         scheduled_at = timezone.now() + datetime.timedelta(days=1)
-        errors = Event.validate("Título válido", "Descripción válida", scheduled_at)
+        errors = Event.validate(
+            "Título válido", "Descripción válida", scheduled_at, self.venue, self.category
+        )
         self.assertEqual(errors, {})
 
     def test_event_validate_with_empty_title(self):
         """Test que verifica la validación de eventos con título vacío"""
         scheduled_at = timezone.now() + datetime.timedelta(days=1)
-        errors = Event.validate("", "Descripción válida", scheduled_at)
+        errors = Event.validate(
+            "", "Descripción válida", scheduled_at, self.venue, self.category
+        )
         self.assertIn("title", errors)
         self.assertEqual(errors["title"], "Por favor ingrese un titulo")
 
     def test_event_validate_with_empty_description(self):
         """Test que verifica la validación de eventos con descripción vacía"""
         scheduled_at = timezone.now() + datetime.timedelta(days=1)
-        errors = Event.validate("Título válido", "", scheduled_at)
+        errors = Event.validate(
+            "Título válido", "", scheduled_at, self.venue, self.category
+        )
         self.assertIn("description", errors)
         self.assertEqual(errors["description"], "Por favor ingrese una descripcion")
 
@@ -57,6 +71,8 @@ class EventModelTest(TestCase):
             description="Descripción del nuevo evento",
             scheduled_at=scheduled_at,
             organizer=self.organizer,
+            category=self.category,
+            venue=self.venue,
         )
 
         self.assertTrue(success)
@@ -66,6 +82,8 @@ class EventModelTest(TestCase):
         new_event = Event.objects.get(title="Nuevo evento")
         self.assertEqual(new_event.description, "Descripción del nuevo evento")
         self.assertEqual(new_event.organizer, self.organizer)
+        self.assertEqual(new_event.category, self.category)
+        self.assertEqual(new_event.venue, self.venue)
 
     def test_event_new_with_invalid_data(self):
         """Test que verifica que no se crean eventos con datos inválidos"""
@@ -78,6 +96,8 @@ class EventModelTest(TestCase):
             description="Descripción del evento",
             scheduled_at=scheduled_at,
             organizer=self.organizer,
+            category=self.category,
+            venue=self.venue,
         )
 
         self.assertFalse(success)
@@ -97,6 +117,8 @@ class EventModelTest(TestCase):
             description="Descripción del evento de prueba",
             scheduled_at=timezone.now() + datetime.timedelta(days=1),
             organizer=self.organizer,
+            category=self.category,
+            venue=self.venue,
         )
 
         event.update(
@@ -104,6 +126,8 @@ class EventModelTest(TestCase):
             description=new_description,
             scheduled_at=new_scheduled_at,
             organizer=self.organizer,
+            category=self.category,
+            venue=self.venue,
         )
 
         # Recargar el evento desde la base de datos
@@ -112,6 +136,8 @@ class EventModelTest(TestCase):
         self.assertEqual(updated_event.title, new_title)
         self.assertEqual(updated_event.description, new_description)
         self.assertEqual(updated_event.scheduled_at.time(), new_scheduled_at.time())
+        self.assertEqual(updated_event.category, self.category)
+        self.assertEqual(updated_event.venue, self.venue)
 
     def test_event_update_partial(self):
         """Test que verifica la actualización parcial de eventos"""
@@ -120,6 +146,8 @@ class EventModelTest(TestCase):
             description="Descripción del evento de prueba",
             scheduled_at=timezone.now() + datetime.timedelta(days=1),
             organizer=self.organizer,
+            category=self.category,
+            venue=self.venue,
         )
 
         original_title = event.title
@@ -131,6 +159,8 @@ class EventModelTest(TestCase):
             description=new_description,
             scheduled_at=None,  # No cambiar
             organizer=None,  # No cambiar
+            category=None,  # No cambiar
+            venue=None,  # No cambiar
         )
 
         # Recargar el evento desde la base de datos
@@ -140,3 +170,5 @@ class EventModelTest(TestCase):
         self.assertEqual(updated_event.title, original_title)
         self.assertEqual(updated_event.description, new_description)
         self.assertEqual(updated_event.scheduled_at, original_scheduled_at)
+        self.assertEqual(updated_event.category, self.category)
+        self.assertEqual(updated_event.venue, self.venue)
