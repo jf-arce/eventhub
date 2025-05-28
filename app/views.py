@@ -981,7 +981,13 @@ def notification_form(request, id=None):
 
         event = get_object_or_404(Event, pk=event_id)
         
-        Notification.validate(title, message, priority, event)
+        errors = Notification.validate(title, message, priority, event)
+        print("Errors:", errors)
+        
+        if errors:
+            for err in errors.values():
+                messages.error(request, err)
+            return redirect('notification_form')
         
         if destination == "all":
             # Obtener todos los usuarios con tickets para el evento

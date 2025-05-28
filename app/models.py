@@ -210,6 +210,10 @@ class Notification(models.Model):
             
         if cls.objects.filter(title=title.strip(), message=message.strip(), event=event).exists():
             errors["duplicado"] = "Ya existe una notificación con el mismo título, mensaje y evento."
+        
+        # El evento debe tener al menos un ticket de usuario vendido
+        if event and event.tickets.count() == 0:
+            errors["sin_destinatarios"] = "No se puede enviar una notificación a un evento sin personas con entradas."
 
         return errors
 
