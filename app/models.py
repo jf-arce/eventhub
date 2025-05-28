@@ -256,8 +256,18 @@ class RefoundRequest(models.Model):
         if ticket_code == "":
             errors["ticket_code"] = "Por favor ingrese su codigo de ticket"
 
+        if cls.objects.filter(ticket_code=ticket_code).exists():
+            errors["ticket_code"] = "Ya existe una solicitud de reembolso para este ticket."
+
         if reason == "":
             errors["reason"] = "Por favor ingrese una razon de reembolso"
+
+        if len(reason) < 10:
+            errors["reason"] = "La razón debe tener al menos 10 caracteres."
+
+        if len(reason) > 200:
+            errors["reason"] = "La razón es demasiado extensa (máximo 1000 caracteres)."
+
 
         return errors
 
