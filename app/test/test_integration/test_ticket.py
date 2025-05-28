@@ -75,7 +75,6 @@ class TicketPurchaseLimitIntegrationTest(TestCase):
         error_found = False
         for message in messages_list:
             message_str = str(message).lower()
-            print(f"Mensaje: {message_str}")
             if "límite" in message_str or "exced" in message_str or "más de 4" in message_str or "máximo" in message_str:
                 error_found = True
                 break
@@ -120,7 +119,6 @@ class TicketPurchaseLimitIntegrationTest(TestCase):
         error_found = False
         for message in messages_list:
             message_str = str(message).lower()
-            print(f"Mensaje: {message_str}")
             if "límite" in message_str or "exced" in message_str or "más de 4" in message_str:
                 error_found = True
                 break
@@ -149,10 +147,6 @@ class TicketPurchaseLimitIntegrationTest(TestCase):
             data=purchase_data,
             follow=True
         )
-        
-        messages = list(get_messages(response.wsgi_request))
-        for message in messages:
-            print(f"Mensaje: {message}")
         
         self.assertEqual(response.status_code, 200)
         
