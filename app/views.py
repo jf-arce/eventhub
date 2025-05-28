@@ -751,6 +751,17 @@ def refound_request(request, id=None):
         ticket_code = request.POST.get("ticket_code")
         reason = request.POST.get("reason")
 
+        errors = RefoundRequest.validate(ticket_code, reason)
+
+        if errors:
+            return render(
+                        request,
+                        "app/refound/refound_request.html",
+                        {
+                            "errors": errors,
+                        },
+                    )
+
         if ticket_code:
             try:
                 ticket_encontrado = Ticket.objects.get(ticket_code=ticket_code)
@@ -822,6 +833,7 @@ def refound_request(request, id=None):
         },
     )
     
+
 def notifications(request):
     user = request.user
     events_not_found = not Event.objects.exists()
