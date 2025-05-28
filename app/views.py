@@ -556,33 +556,63 @@ def categorys(request):
 
 @login_required
 def category_form(request, id=None):
-    print("Llamando a category_form con ID:", id)
     user = request.user
 
     if not (user.is_organizer or user.is_superuser):
         return redirect("categorys")
 
+    errors = {}
+    category = {}
+
     if request.method == "POST":
-        name = request.POST.get("name")
-        description = request.POST.get("description")
+        name = request.POST.get("name", "").strip()
+        description = request.POST.get("description", "").strip()
+        exclude_id = id if id is not None else None
 
         if id is None:
+            errors = Category.validate(name, description, exclude_id=exclude_id)
+            if errors:
+                category = {"name": name, "description": description}
+                return render(
+                    request,
+                    "app/categorys/category_form.html",
+                    {
+                        "category": category,
+                        "errors": errors,
+                        "user_is_organizer": user.is_organizer,
+                    },
+                )
             Category.new(name, description)
+
         else:
             category = get_object_or_404(Category, pk=id)
-            category.update(name, description)
+            success, errors = category.update(name, description)
+            if not success:
+                category.name = name
+                category.description = description
+                return render(
+                    request,
+                    "app/categorys/category_form.html",
+                    {
+                        "category": category,
+                        "errors": errors,
+                        "user_is_organizer": user.is_organizer,
+                    },
+                )
 
         return redirect("categorys")
 
-    category = {}
     if id is not None:
         category = get_object_or_404(Category, pk=id)
 
     return render(
         request,
         "app/categorys/category_form.html",
-        {"category": category, 
-        "user_is_organizer": request.user.is_organizer},
+        {
+            "category": category,
+            "errors": errors,
+            "user_is_organizer": user.is_organizer,
+        },
     )
 
 @login_required
