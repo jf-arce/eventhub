@@ -12,6 +12,7 @@ from django.db.models import Count
 from django.db.models.deletion import ProtectedError
 from datetime import timedelta
 from django.utils import timezone
+from django.db import models
 
 def register(request):
     if request.method == "POST":
@@ -393,13 +394,35 @@ def purchase_ticket(request, event_id):
         messages.error(request, "Los organizadores no pueden comprar tickets para sus propios eventos")
         return redirect('event_detail', id=event_id)
     
+    if timezone.now() > event.scheduled_at:
+        messages.error(request, "No se pueden comprar entradas para eventos que ya ocurrieron")
+        return redirect('event_detail', id=event_id)
+    
     if request.method == "POST":
         try:
             quantity = request.POST.get("cantidad")
             ticket_type = request.POST.get("tipoEntrada", "GENERAL")
             
-            ticket_code = str(uuid.uuid4())[:8].upper()
+            if ticket_type not in [choice[0] for choice in Ticket.TICKET_TYPES]:
+                messages.error(request, "Tipo de entrada no válido")
+                return render(request, 'app/purchase_ticket.html', {'event': event})
             
+            try:
+                quantity = int(quantity)
+                if quantity <= 0:
+                    messages.error(request, "La cantidad debe ser mayor a 0")
+                    return render(request, 'app/purchase_ticket.html', {'event': event})
+            except ValueError:
+                messages.error(request, "La cantidad debe ser un número válido")
+                return render(request, 'app/purchase_ticket.html', {'event': event})
+            
+            tickets_vendidos = Ticket.objects.filter(event=event).aggregate(
+                total=models.Sum('quantity'))['total'] or 0
+            if tickets_vendidos + quantity > event.venue.capacity:
+                messages.error(request, f"No hay suficientes entradas disponibles. Quedan {event.venue.capacity - tickets_vendidos} entradas.")
+                return render(request, 'app/purchase_ticket.html', {'event': event})
+            
+            ticket_code = str(uuid.uuid4())[:8].upper()
             buy_date = timezone.now().date()
             
             success, errors = Ticket.new(
@@ -464,24 +487,54 @@ def edit_ticket(request, event_id, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     
     if not (request.user == ticket.user or request.user == event.organizer):
+        messages.error(request, "No tienes permisos para editar este ticket")
         return redirect('events')
+    
+    if timezone.now() > event.scheduled_at:
+        messages.error(request, "No se pueden modificar entradas para eventos que ya ocurrieron")
+        return redirect('view_ticket', event_id=event_id)
     
     if request.method == 'POST':
         ticket_type = request.POST.get('ticket_type')
         quantity = request.POST.get('quantity')
         
+        if ticket_type not in [choice[0] for choice in Ticket.TICKET_TYPES]:
+            messages.error(request, "Tipo de entrada no válido")
+            return render(request, 'app/edit_ticket.html', {
+                'event': event,
+                'ticket': ticket
+            })
+        
         try:
             quantity = int(quantity)
             if quantity < 1:
-                raise ValueError("La cantidad debe ser mayor a 0")
-                
+                messages.error(request, "La cantidad debe ser mayor a 0")
+                return render(request, 'app/edit_ticket.html', {
+                    'event': event,
+                    'ticket': ticket
+                })
+            
+            tickets_vendidos = Ticket.objects.filter(event=event).exclude(
+                id=ticket.pk).aggregate(total=models.Sum('quantity'))['total'] or 0
+            if tickets_vendidos + quantity > event.venue.capacity:
+                messages.error(request, f"La cantidad excede la capacidad disponible del evento. Máximo disponible: {event.venue.capacity - tickets_vendidos}")
+                return render(request, 'app/edit_ticket.html', {
+                    'event': event,
+                    'ticket': ticket
+                })
+            
             ticket.type = ticket_type
             ticket.quantity = quantity
             ticket.save()
+            messages.success(request, "Ticket actualizado exitosamente")
             return redirect('view_ticket', event_id=event_id)
             
         except ValueError:
-            pass
+            messages.error(request, "La cantidad debe ser un número válido")
+            return render(request, 'app/edit_ticket.html', {
+                'event': event,
+                'ticket': ticket
+            })
     
     return render(request, 'app/edit_ticket.html', {
         'event': event,
@@ -1169,3 +1222,57 @@ def mark_all_as_read(request):
     request.user.notifications.filter(is_read=False).update(is_read=True)
     
     return redirect('user_notifications')
+
+@login_required
+def check_ticket_limit(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    cantidad = int(request.GET.get('cantidad', 1))
+    
+    current_count = Ticket.get_user_tickets_count(user=request.user, event=event)
+    
+    success = (current_count + cantidad) <= 4
+    
+    return JsonResponse({
+        'success': success,
+        'current_count': current_count,
+        'total': current_count + cantidad,
+        'remaining': max(0, 4 - current_count)
+    })
+
+@login_required
+def check_ticket_limit_for_edit(request, event_id, ticket_id):
+    """
+    Endpoint AJAX para verificar límites al editar un ticket específico
+    """
+    event = get_object_or_404(Event, id=event_id)
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    cantidad = int(request.GET.get('cantidad', 1))
+    
+    if not (request.user == ticket.user or request.user == event.organizer):
+        return JsonResponse({'success': False, 'error': 'Sin permisos'})
+    
+    if request.user.is_organizer:
+        return JsonResponse({
+            'success': True,
+            'current_count': 0,
+            'total': cantidad,
+            'remaining': float('inf')
+        })
+    
+    current_count = Ticket.objects.filter(
+        user=ticket.user, 
+        event=event
+    ).exclude(
+        id=ticket.pk
+    ).aggregate(
+        total=models.Sum('quantity')
+    )['total'] or 0
+    
+    success = (current_count + cantidad) <= 4
+    
+    return JsonResponse({
+        'success': success,
+        'current_count': current_count,
+        'total': current_count + cantidad,
+        'remaining': max(0, 4 - current_count)
+    })
