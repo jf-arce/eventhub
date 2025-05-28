@@ -69,14 +69,29 @@ class Category (models.Model):
         return self.name
    
     @classmethod
-    def validate(cls, name, description):
+    def validate(cls, name, description, exclude_id=None):
         errors = {}
 
         if name == "":
             errors["name"] = "Por favor ingrese un nombre"
 
+        if len(name) > 200:
+            errors["name"] = "El nombre no puede tener más de 200 caracteres"
+
         if description == "":
             errors["description"] = "Por favor ingrese una descripcion"
+
+        if len(description.strip()) < 10:
+           errors["description"] = "La descripción debe tener al menos 10 caracteres"
+
+        if len(description) > 1000:
+            errors["description"] = f"La descripción no puede tener más de 1000 caracteres."
+
+        qs = cls.objects.filter(name__iexact=name)
+        if exclude_id:
+            qs = qs.exclude(pk=exclude_id)
+        if qs.exists():
+            errors["name"] = "Ya existe una categoría con este nombre"
 
         return errors
     
@@ -93,12 +108,16 @@ class Category (models.Model):
         )
 
         return True, None
-    
+
     def update(self, name, description):
+        errors = self.validate(name, description, exclude_id=self.pk)
+        if errors:
+            return False, errors
+
         self.name = name or self.name
         self.description = description or self.description
-
         self.save()
+        return True, {}
 
 
 class Event(models.Model):
@@ -131,7 +150,7 @@ class Event(models.Model):
             errors["category"] = "Por favor seleccione una categoría"
         
         if scheduled_at:
-            buenos_aires_tz = timezone.get_fixed_timezone(-3 * 60) # UTC-3 de Buenos Aires
+            buenos_aires_tz = timezone.get_fixed_timezone(-3 * 60)
             
             now_in_ba = timezone.now().astimezone(buenos_aires_tz)
             today = now_in_ba.replace(hour=0, minute=0, second=0, microsecond=0)

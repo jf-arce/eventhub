@@ -25,6 +25,9 @@
                                        type="text"
                                        value="{{ category.name }}"
                                        name="name" />
+                                {% if errors.name %}
+                                    <div class="error" style="color: red;">{{ errors.name }}</div>
+                                {% endif %}
                             </div>
                             <div>
                                 <label for="description" class="form-label">Descripción</label>
@@ -34,6 +37,9 @@
                                     name="description"
                                     rows="4"
                                     required="">{{ category.description }}</textarea>
+                                {% if errors.description %}
+                                    <div class="error" style="color: red;">{{ errors.description }}</div>
+                                {% endif %}
                             </div>
 
                             <div>
