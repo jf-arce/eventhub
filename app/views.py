@@ -369,13 +369,35 @@ def purchase_ticket(request, event_id):
         messages.error(request, "Los organizadores no pueden comprar tickets para sus propios eventos")
         return redirect('event_detail', id=event_id)
     
+    if timezone.now() > event.scheduled_at:
+        messages.error(request, "No se pueden comprar entradas para eventos que ya ocurrieron")
+        return redirect('event_detail', id=event_id)
+    
     if request.method == "POST":
         try:
             quantity = request.POST.get("cantidad")
             ticket_type = request.POST.get("tipoEntrada", "GENERAL")
             
-            ticket_code = str(uuid.uuid4())[:8].upper()
+            if ticket_type not in [choice[0] for choice in Ticket.TICKET_TYPES]:
+                messages.error(request, "Tipo de entrada no válido")
+                return render(request, 'app/purchase_ticket.html', {'event': event})
             
+            try:
+                quantity = int(quantity)
+                if quantity <= 0:
+                    messages.error(request, "La cantidad debe ser mayor a 0")
+                    return render(request, 'app/purchase_ticket.html', {'event': event})
+            except ValueError:
+                messages.error(request, "La cantidad debe ser un número válido")
+                return render(request, 'app/purchase_ticket.html', {'event': event})
+            
+            tickets_vendidos = Ticket.objects.filter(event=event).aggregate(
+                total=models.Sum('quantity'))['total'] or 0
+            if tickets_vendidos + quantity > event.venue.capacity:
+                messages.error(request, f"No hay suficientes entradas disponibles. Quedan {event.venue.capacity - tickets_vendidos} entradas.")
+                return render(request, 'app/purchase_ticket.html', {'event': event})
+            
+            ticket_code = str(uuid.uuid4())[:8].upper()
             buy_date = timezone.now().date()
             
             success, errors = Ticket.new(
@@ -443,9 +465,20 @@ def edit_ticket(request, event_id, ticket_id):
         messages.error(request, "No tienes permisos para editar este ticket")
         return redirect('events')
     
+    if timezone.now() > event.scheduled_at:
+        messages.error(request, "No se pueden modificar entradas para eventos que ya ocurrieron")
+        return redirect('view_ticket', event_id=event_id)
+    
     if request.method == 'POST':
         ticket_type = request.POST.get('ticket_type')
         quantity = request.POST.get('quantity')
+        
+        if ticket_type not in [choice[0] for choice in Ticket.TICKET_TYPES]:
+            messages.error(request, "Tipo de entrada no válido")
+            return render(request, 'app/edit_ticket.html', {
+                'event': event,
+                'ticket': ticket
+            })
         
         try:
             quantity = int(quantity)
@@ -456,22 +489,15 @@ def edit_ticket(request, event_id, ticket_id):
                     'ticket': ticket
                 })
             
-            if not request.user.is_organizer:
-                validation_errors = Ticket.validate_ticket_edit_limit(
-                    user=ticket.user, 
-                    event=event, 
-                    new_quantity=quantity,
-                    ticket_being_edited=ticket
-                )
-                
-                if validation_errors:
-                    for error in validation_errors.values():
-                        messages.error(request, error)
-                    return render(request, 'app/edit_ticket.html', {
-                        'event': event,
-                        'ticket': ticket
-                    })
-                
+            tickets_vendidos = Ticket.objects.filter(event=event).exclude(
+                id=ticket.pk).aggregate(total=models.Sum('quantity'))['total'] or 0
+            if tickets_vendidos + quantity > event.venue.capacity:
+                messages.error(request, f"La cantidad excede la capacidad disponible del evento. Máximo disponible: {event.venue.capacity - tickets_vendidos}")
+                return render(request, 'app/edit_ticket.html', {
+                    'event': event,
+                    'ticket': ticket
+                })
+            
             ticket.type = ticket_type
             ticket.quantity = quantity
             ticket.save()

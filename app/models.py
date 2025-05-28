@@ -263,6 +263,31 @@ class Ticket(models.Model):
         return self.ticket_code
     
     @classmethod
+    def validate_event_date(cls, event):
+        """
+        Valida que el evento no haya ocurrido ya
+        """
+        if timezone.now() > event.scheduled_at:
+            return False, "No se pueden gestionar entradas para eventos que ya ocurrieron"
+        return True, None
+
+    @classmethod
+    def validate_capacity(cls, event, quantity, exclude_ticket_id=None):
+        """
+        Valida que haya suficiente capacidad disponible en el evento
+        """
+        query = cls.objects.filter(event=event)
+        if exclude_ticket_id:
+            query = query.exclude(id=exclude_ticket_id)
+        
+        tickets_vendidos = query.aggregate(total=models.Sum('quantity'))['total'] or 0
+        disponibles = event.venue.capacity - tickets_vendidos
+        
+        if quantity > disponibles:
+            return False, f"No hay suficientes entradas disponibles (quedan {disponibles})"
+        return True, None
+        
+    @classmethod
     def validate(cls, quantity, type, user=None, event=None):
         errors = {}
 
@@ -273,11 +298,21 @@ class Ticket(models.Model):
                 quantity = int(quantity)
                 if quantity <= 0:
                     errors["quantity"] = "La cantidad de entradas debe ser mayor a 0"
+                    
+                if event and quantity > 0:
+                    valid_capacity, error_msg = cls.validate_capacity(event, quantity)
+                    if not valid_capacity:
+                        errors["capacity"] = error_msg
             except ValueError:
                 errors["quantity"] = "La cantidad de entradas debe ser un número válido"
 
         if type == "":
             errors["type"] = "Por favor ingrese el tipo de entrada"
+            
+        if event:
+            valid_date, error_msg = cls.validate_event_date(event)
+            if not valid_date:
+                errors["event_date"] = error_msg
     
         if user and event and not errors.get('quantity'):
             limit_errors = cls.validate_ticket_limit(user, event, quantity)
