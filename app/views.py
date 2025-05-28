@@ -170,6 +170,7 @@ def event_form(request, id=None):
                     "event": request.POST,
                     "user_is_organizer": user.is_organizer,
                     "categorys": Category.objects.filter(is_active=True),
+                    "venues": Venue.objects.all().order_by('name'),
                     "error": error,
                 },
             )
