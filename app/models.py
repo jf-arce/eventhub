@@ -70,14 +70,29 @@ class Category (models.Model):
         return self.name
    
     @classmethod
-    def validate(cls, name, description):
+    def validate(cls, name, description, exclude_id=None):
         errors = {}
 
         if name == "":
             errors["name"] = "Por favor ingrese un nombre"
 
+        if len(name) > 200:
+            errors["name"] = "El nombre no puede tener más de 200 caracteres"
+
         if description == "":
             errors["description"] = "Por favor ingrese una descripcion"
+
+        if len(description.strip()) < 10:
+           errors["description"] = "La descripción debe tener al menos 10 caracteres"
+
+        if len(description) > 1000:
+            errors["description"] = f"La descripción no puede tener más de 1000 caracteres."
+
+        qs = cls.objects.filter(name__iexact=name)
+        if exclude_id:
+            qs = qs.exclude(pk=exclude_id)
+        if qs.exists():
+            errors["name"] = "Ya existe una categoría con este nombre"
 
         return errors
     
@@ -94,12 +109,16 @@ class Category (models.Model):
         )
 
         return True, None
-    
+
     def update(self, name, description):
+        errors = self.validate(name, description, exclude_id=self.pk)
+        if errors:
+            return False, errors
+
         self.name = name or self.name
         self.description = description or self.description
-
         self.save()
+        return True, {}
 
 
 class Event(models.Model):
@@ -132,7 +151,7 @@ class Event(models.Model):
             errors["category"] = "Por favor seleccione una categoría"
         
         if scheduled_at:
-            buenos_aires_tz = timezone.get_fixed_timezone(-3 * 60) # UTC-3 de Buenos Aires
+            buenos_aires_tz = timezone.get_fixed_timezone(-3 * 60)
             
             now_in_ba = timezone.now().astimezone(buenos_aires_tz)
             today = now_in_ba.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -163,11 +182,17 @@ class Event(models.Model):
 
         return True, None
 
-    def update(self, title, description, scheduled_at, organizer, venue=None):
-        self.title = title or self.title
-        self.description = description or self.description
-        self.scheduled_at = scheduled_at or self.scheduled_at
-        self.organizer = organizer or self.organizer
+    def update(self, title=None, description=None, scheduled_at=None, organizer=None, category=None, venue=None):
+        if title is not None:
+            self.title = title
+        if description is not None:
+            self.description = description
+        if scheduled_at is not None:
+            self.scheduled_at = scheduled_at
+        if organizer is not None:
+            self.organizer = organizer
+        if category is not None:
+            self.category = category
         if venue is not None:
             self.venue = venue
 
@@ -199,7 +224,7 @@ class Notification(models.Model):
         return self.title
     
     @classmethod
-    def validate(cls, title, message, priority):
+    def validate(cls, title, message, priority, event):
         errors = {}
         
         if message == "":
@@ -207,8 +232,37 @@ class Notification(models.Model):
 
         if priority not in [cls.Priority.HIGH, cls.Priority.NORMAL, cls.Priority.LOW]:
             errors["priority"] = "Prioridad no válida"
+            
+        if title is None or not str(title).strip():
+            errors["title"] = "El título no puede estar vacío."
+        elif len(title.strip()) > 200:
+            errors["title"] = "El título no puede superar los 200 caracteres."
+            
+        if cls.objects.filter(title=title.strip(), message=message.strip(), event=event).exists():
+            errors["duplicado"] = "Ya existe una notificación con el mismo título, mensaje y evento."
+        
+        # El evento debe tener al menos un ticket de usuario vendido
+        if event and event.tickets.count() == 0:
+            errors["sin_destinatarios"] = "No se puede enviar una notificación a un evento sin personas con entradas."
 
         return errors
+    
+    @classmethod
+    def notify_users_of_event_update(cls, event, message):
+        notification = cls.objects.create(
+            title="Cambios en el evento",
+            message=message,
+            priority= cls.Priority.HIGH,
+            event=event
+        )
+        
+        # Encuentra todos los usuarios que tienen entradas para el evento
+        tickets = Ticket.objects.filter(event=event)
+        users = [ticket.user for ticket in tickets]
+        
+        notification.users.set(users)
+        notification.save()
+        return notification
 
 class RefoundRequest(models.Model):
     approved = models.BooleanField(null=True, default=None)
@@ -230,8 +284,18 @@ class RefoundRequest(models.Model):
         if ticket_code == "":
             errors["ticket_code"] = "Por favor ingrese su codigo de ticket"
 
+        if cls.objects.filter(ticket_code=ticket_code).exists():
+            errors["ticket_code"] = "Ya existe una solicitud de reembolso para este ticket."
+
         if reason == "":
             errors["reason"] = "Por favor ingrese una razon de reembolso"
+
+        if len(reason) < 10:
+            errors["reason"] = "La razón debe tener al menos 10 caracteres."
+
+        if len(reason) > 200:
+            errors["reason"] = "La razón es demasiado extensa (máximo 1000 caracteres)."
+
 
         return errors
 
@@ -325,20 +389,32 @@ class Comment(models.Model):
         return self.title
 
     @classmethod
-    def validate(cls, title, text):
+    def validate(cls, title, text, user, event):
         errors = {}
+        
+        if not title.strip():
+            errors["title"] = "Por favor ingrese un título"
 
-        if title == "":
-            errors["title"] = "Por favor ingrese un titulo"
-            
-        if text == "":
+        if not text.strip():
             errors["text"] = "Por favor ingrese un comentario"
+
+        if len(title) > 200:
+            errors["title"] = "El título no puede tener más de 200 caracteres"
+
+        if len(text) > 1000:
+            errors["text"] = "El comentario no puede tener más de 1000 caracteres"
+        
+        if not isinstance(user, User) or not User.objects.filter(id=user.pk).exists():
+            errors["user"] = "El usuario no existe o no es válido"
+
+        if not isinstance(event, Event) or not Event.objects.filter(id=event.pk).exists():
+            errors["event"] = "El evento no existe o no es válido"
 
         return errors
     
     @classmethod
     def new(cls, title, text, user, event):
-        error = cls.validate(title, text)
+        error = cls.validate(title, text, user, event)
         
         if len(error.keys()) > 0:
             return False, error

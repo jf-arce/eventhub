@@ -172,6 +172,7 @@ def event_form(request, id=None):
                     "event": request.POST,
                     "user_is_organizer": user.is_organizer,
                     "categorys": Category.objects.filter(is_active=True),
+                    "venues": Venue.objects.all().order_by('name'),
                     "error": error,
                 },
             )
@@ -269,7 +270,31 @@ def event_form(request, id=None):
                 )
         else:
             event = get_object_or_404(Event, pk=id)
-            event.update(title, description, scheduled_at, request.user, venue)
+            
+            notification_required = False
+            message = f"Estimado cliente, el evento '{event.title}' ha sido modificado:\n"
+            event_changes = []
+            
+            old_scheduled_at = event.scheduled_at.replace(second=0, microsecond=0)
+            new_scheduled_at = scheduled_at.replace(second=0, microsecond=0)
+
+            if old_scheduled_at.date() != new_scheduled_at.date():
+                event_changes.append(f"- 📅Nueva fecha: {new_scheduled_at.date().strftime('%d/%m/%Y')}")
+                notification_required = True
+
+            if old_scheduled_at.time() != new_scheduled_at.time():
+                event_changes.append(f"- ⌚Nueva hora: {new_scheduled_at.time().strftime('%H:%M')}")
+                notification_required = True
+
+            if event.venue != venue:
+                event_changes.append(f"- 📍Nueva ubicación: {venue}")
+                notification_required = True
+
+            if notification_required:
+                message += "\n".join(event_changes)
+                Notification.notify_users_of_event_update(event, message)
+                
+            event.update(title, description, scheduled_at, request.user, category, venue)
 
         return redirect("events")
 
@@ -558,33 +583,63 @@ def categorys(request):
 
 @login_required
 def category_form(request, id=None):
-    print("Llamando a category_form con ID:", id)
     user = request.user
 
     if not (user.is_organizer or user.is_superuser):
         return redirect("categorys")
 
+    errors = {}
+    category = {}
+
     if request.method == "POST":
-        name = request.POST.get("name")
-        description = request.POST.get("description")
+        name = request.POST.get("name", "").strip()
+        description = request.POST.get("description", "").strip()
+        exclude_id = id if id is not None else None
 
         if id is None:
+            errors = Category.validate(name, description, exclude_id=exclude_id)
+            if errors:
+                category = {"name": name, "description": description}
+                return render(
+                    request,
+                    "app/categorys/category_form.html",
+                    {
+                        "category": category,
+                        "errors": errors,
+                        "user_is_organizer": user.is_organizer,
+                    },
+                )
             Category.new(name, description)
+
         else:
             category = get_object_or_404(Category, pk=id)
-            category.update(name, description)
+            success, errors = category.update(name, description)
+            if not success:
+                category.name = name
+                category.description = description
+                return render(
+                    request,
+                    "app/categorys/category_form.html",
+                    {
+                        "category": category,
+                        "errors": errors,
+                        "user_is_organizer": user.is_organizer,
+                    },
+                )
 
         return redirect("categorys")
 
-    category = {}
     if id is not None:
         category = get_object_or_404(Category, pk=id)
 
     return render(
         request,
         "app/categorys/category_form.html",
-        {"category": category, 
-        "user_is_organizer": request.user.is_organizer},
+        {
+            "category": category,
+            "errors": errors,
+            "user_is_organizer": user.is_organizer,
+        },
     )
 
 @login_required
@@ -753,6 +808,17 @@ def refound_request(request, id=None):
         ticket_code = request.POST.get("ticket_code")
         reason = request.POST.get("reason")
 
+        errors = RefoundRequest.validate(ticket_code, reason)
+
+        if errors:
+            return render(
+                        request,
+                        "app/refound/refound_request.html",
+                        {
+                            "errors": errors,
+                        },
+                    )
+
         if ticket_code:
             try:
                 ticket_encontrado = Ticket.objects.get(ticket_code=ticket_code)
@@ -824,6 +890,7 @@ def refound_request(request, id=None):
         },
     )
     
+
 def notifications(request):
     user = request.user
     events_not_found = not Event.objects.exists()
@@ -980,10 +1047,16 @@ def notification_form(request, id=None):
         priority = request.POST.get("priority")
         event_id = request.POST.get("event")
         destination = request.POST.get("destination")
-        
-        Notification.validate(title, message, priority)
 
         event = get_object_or_404(Event, pk=event_id)
+        
+        errors = Notification.validate(title, message, priority, event)
+        print("Errors:", errors)
+        
+        if errors:
+            for err in errors.values():
+                messages.error(request, err)
+            return redirect('notification_form')
         
         if destination == "all":
             # Obtener todos los usuarios con tickets para el evento
@@ -1054,10 +1127,10 @@ def notification_update(request, id):
         priority = request.POST.get("priority")
         
         print(title, message, priority)
-
-        Notification.validate(title, message, priority)
         
         notification = get_object_or_404(Notification, pk=id)
+        
+        Notification.validate(title, message, priority, notification.event)
         
         notification.title = title or notification.title
         notification.message = message or notification.message
