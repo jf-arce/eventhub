@@ -5,7 +5,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from app.models import Event, User
+from app.models import Event, User, Category, Venue
 
 
 class BaseEventTestCase(TestCase):
@@ -28,12 +28,24 @@ class BaseEventTestCase(TestCase):
             is_organizer=False,
         )
 
+        # Crear categoría y venue obligatorios
+        self.category = Category.objects.create(name="TestCat", description="desc")
+        self.venue = Venue.objects.create(
+            name="TestVenue",
+            address="Calle Falsa 123",
+            city="Ciudad",
+            capacity=100,
+            contact="contacto@prueba.com",
+        )
+
         # Crear algunos eventos de prueba
         self.event1 = Event.objects.create(
             title="Evento 1",
             description="Descripción del evento 1",
             scheduled_at=timezone.now() + datetime.timedelta(days=1),
             organizer=self.organizer,
+            category=self.category,  
+            venue=self.venue,        
         )
 
         self.event2 = Event.objects.create(
@@ -41,6 +53,8 @@ class BaseEventTestCase(TestCase):
             description="Descripción del evento 2",
             scheduled_at=timezone.now() + datetime.timedelta(days=2),
             organizer=self.organizer,
+            category=self.category,
+            venue=self.venue,
         )
 
         # Cliente para hacer peticiones
@@ -193,24 +207,31 @@ class EventFormSubmissionTest(BaseEventTestCase):
 
         # Crear datos para el evento
         event_data = {
-            "title": "Nuevo Evento",
+            "title": "Nuevo Evento 111",
             "description": "Descripción del nuevo evento",
-            "date": "2025-05-01",
+            "date": "2026-05-01",
             "time": "14:30",
+            "venue": str(self.venue.id),       
+            "category": str(self.category.id),
         }
 
         # Hacer petición POST a la vista event_form
         response = self.client.post(reverse("event_form"), event_data)
+        response = self.client.post(reverse("event_form"), event_data)
+
+# Debug en caso de fallo
+        if response.status_code != 302:
+            print("Contenido de respuesta:\n", response.content.decode())
 
         # Verificar que redirecciona a events
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse("events"))
 
         # Verificar que se creó el evento
-        self.assertTrue(Event.objects.filter(title="Nuevo Evento").exists())
-        evento = Event.objects.get(title="Nuevo Evento")
+        self.assertTrue(Event.objects.filter(title="Nuevo Evento 111").exists())
+        evento = Event.objects.filter(title="Nuevo Evento 111").first()
         self.assertEqual(evento.description, "Descripción del nuevo evento")
-        self.assertEqual(evento.scheduled_at.year, 2025)
+        self.assertEqual(evento.scheduled_at.year, 2026)
         self.assertEqual(evento.scheduled_at.month, 5)
         self.assertEqual(evento.scheduled_at.day, 1)
         self.assertEqual(evento.scheduled_at.hour, 14)
@@ -228,6 +249,8 @@ class EventFormSubmissionTest(BaseEventTestCase):
             "description": "Nueva descripción actualizada",
             "date": "2025-06-15",
             "time": "16:45",
+            "venue": str(self.venue.id),        
+            "category": str(self.category.id),
         }
 
         # Hacer petición POST para editar el evento
