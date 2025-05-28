@@ -241,6 +241,23 @@ class Notification(models.Model):
             errors["sin_destinatarios"] = "No se puede enviar una notificación a un evento sin personas con entradas."
 
         return errors
+    
+    @classmethod
+    def notify_users_of_event_update(cls, event, message):
+        notification = cls.objects.create(
+            title="Cambios en el evento",
+            message=message,
+            priority= cls.Priority.HIGH,
+            event=event
+        )
+        
+        # Encuentra todos los usuarios que tienen entradas para el evento
+        tickets = Ticket.objects.filter(event=event)
+        users = [ticket.user for ticket in tickets]
+        
+        notification.users.set(users)
+        notification.save()
+        return notification
 
 class RefoundRequest(models.Model):
     approved = models.BooleanField(null=True, default=None)

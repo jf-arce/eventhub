@@ -268,6 +268,30 @@ def event_form(request, id=None):
                 )
         else:
             event = get_object_or_404(Event, pk=id)
+            
+            notification_required = False
+            message = f"Estimado cliente, el evento '{event.title}' ha sido modificado:\n"
+            event_changes = []
+            
+            old_scheduled_at = event.scheduled_at.replace(second=0, microsecond=0)
+            new_scheduled_at = scheduled_at.replace(second=0, microsecond=0)
+
+            if old_scheduled_at.date() != new_scheduled_at.date():
+                event_changes.append(f"- 📅Nueva fecha: {new_scheduled_at.date().strftime('%d/%m/%Y')}")
+                notification_required = True
+
+            if old_scheduled_at.time() != new_scheduled_at.time():
+                event_changes.append(f"- ⌚Nueva hora: {new_scheduled_at.time().strftime('%H:%M')}")
+                notification_required = True
+
+            if event.venue != venue:
+                event_changes.append(f"- 📍Nueva ubicación: {venue}")
+                notification_required = True
+
+            if notification_required:
+                message += "\n".join(event_changes)
+                Notification.notify_users_of_event_update(event, message)
+                
             event.update(title, description, scheduled_at, request.user, category, venue)
 
         return redirect("events")
