@@ -267,7 +267,7 @@ def event_form(request, id=None):
                 )
         else:
             event = get_object_or_404(Event, pk=id)
-            event.update(title, description, scheduled_at, request.user, venue)
+            event.update(title, description, scheduled_at, request.user, category, venue)
 
         return redirect("events")
 
