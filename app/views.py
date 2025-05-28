@@ -978,10 +978,16 @@ def notification_form(request, id=None):
         priority = request.POST.get("priority")
         event_id = request.POST.get("event")
         destination = request.POST.get("destination")
-        
-        Notification.validate(title, message, priority)
 
         event = get_object_or_404(Event, pk=event_id)
+        
+        errors = Notification.validate(title, message, priority, event)
+        print("Errors:", errors)
+        
+        if errors:
+            for err in errors.values():
+                messages.error(request, err)
+            return redirect('notification_form')
         
         if destination == "all":
             # Obtener todos los usuarios con tickets para el evento
@@ -1052,10 +1058,10 @@ def notification_update(request, id):
         priority = request.POST.get("priority")
         
         print(title, message, priority)
-
-        Notification.validate(title, message, priority)
         
         notification = get_object_or_404(Notification, pk=id)
+        
+        Notification.validate(title, message, priority, notification.event)
         
         notification.title = title or notification.title
         notification.message = message or notification.message
