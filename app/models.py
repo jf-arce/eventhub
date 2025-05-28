@@ -332,20 +332,32 @@ class Comment(models.Model):
         return self.title
 
     @classmethod
-    def validate(cls, title, text):
+    def validate(cls, title, text, user, event):
         errors = {}
+        
+        if not title.strip():
+            errors["title"] = "Por favor ingrese un título"
 
-        if title == "":
-            errors["title"] = "Por favor ingrese un titulo"
-            
-        if text == "":
+        if not text.strip():
             errors["text"] = "Por favor ingrese un comentario"
+
+        if len(title) > 200:
+            errors["title"] = "El título no puede tener más de 200 caracteres"
+
+        if len(text) > 1000:
+            errors["text"] = "El comentario no puede tener más de 1000 caracteres"
+        
+        if not isinstance(user, User) or not User.objects.filter(id=user.pk).exists():
+            errors["user"] = "El usuario no existe o no es válido"
+
+        if not isinstance(event, Event) or not Event.objects.filter(id=event.pk).exists():
+            errors["event"] = "El evento no existe o no es válido"
 
         return errors
     
     @classmethod
     def new(cls, title, text, user, event):
-        error = cls.validate(title, text)
+        error = cls.validate(title, text, user, event)
         
         if len(error.keys()) > 0:
             return False, error
