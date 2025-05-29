@@ -117,6 +117,8 @@ def event_detail(request, id):
     editing = False
     form = RatingForm()
     user_has_ticket = Ticket.objects.filter(event=event, user=request.user).exists()
+    avg_rating = event.average_rating()
+
     
     days_remaining = event.days_until_event()
     return render(
@@ -132,6 +134,7 @@ def event_detail(request, id):
             "comments": comments,
             "user_is_organizer": request.user == event.organizer, 
             "user_is_admin": request.user.is_superuser,
+            "avg_rating": avg_rating, 
             "days_remaining": days_remaining,
         }
     )

@@ -92,10 +92,37 @@
                         </div>
                     </div>
                     {% endif %}
+                    
+                    {% if user_is_organizer %}
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-light rounded-circle p-2 me-3">
+                            <i class="bi bi-star-fill text-warning"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Calificación promedio</h6>
+                            {% if avg_rating %}
+                            <p class="mb-0">{{ avg_rating }} / 5 <small class="text-muted">({{ ratings|length }} calificaciones)</small></p>
+                            {% else %}
+                            <p class="mb-0 text-muted">Sin calificaciones</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
+        <!-- Quitar el alert que no combina con el resto -->
+        {% comment %}
+        {% if user_is_organizer and avg_rating %}
+            <div class="alert alert-info d-flex align-items-center gap-2 mt-3" style="width: fit-content;">
+                <i class="bi bi-star-fill text-warning"></i>
+                <span><strong>Promedio de calificaciones:</strong> {{ avg_rating }} / 5</span>
+            </div>
+        {% endif %}
+        {% endcomment %}
+
+        <!-- Sección de calificaciones y reseñas -->
         {% include "app/rating/ratings_section.html" %}
     </div>
     {% include 'app/comments/event_comments.html' with comments=comments%}

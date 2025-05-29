@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from datetime import datetime, timedelta, date
 from django.utils import timezone
+from django.db.models import Avg
 
 
 class User(AbstractUser):
@@ -195,8 +196,9 @@ class Event(models.Model):
             self.category = category
         if venue is not None:
             self.venue = venue
+        self.save()        
 
-        self.save()
+        
 
     def is_future(self):
         time_now = timezone.now() - timedelta(hours=3)
@@ -240,6 +242,12 @@ class Event(models.Model):
         """
         days = self.days_until_event()
         return days is not None and days >= 0
+
+    def average_rating(self):
+        avg = self.ratings.aggregate(avg=Avg('rating'))['avg']
+        if avg is not None:
+            return round(avg, 2)
+        return None
 
 class Notification(models.Model):
     class Priority(models.TextChoices):
