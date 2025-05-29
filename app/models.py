@@ -2,9 +2,10 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from django.utils import timezone
 from django.db.models import Avg
+
 
 class User(AbstractUser):
     is_organizer = models.BooleanField(default=False)
@@ -70,14 +71,29 @@ class Category (models.Model):
         return self.name
    
     @classmethod
-    def validate(cls, name, description):
+    def validate(cls, name, description, exclude_id=None):
         errors = {}
 
         if name == "":
             errors["name"] = "Por favor ingrese un nombre"
 
+        if len(name) > 200:
+            errors["name"] = "El nombre no puede tener más de 200 caracteres"
+
         if description == "":
             errors["description"] = "Por favor ingrese una descripcion"
+
+        if len(description.strip()) < 10:
+           errors["description"] = "La descripción debe tener al menos 10 caracteres"
+
+        if len(description) > 1000:
+            errors["description"] = f"La descripción no puede tener más de 1000 caracteres."
+
+        qs = cls.objects.filter(name__iexact=name)
+        if exclude_id:
+            qs = qs.exclude(pk=exclude_id)
+        if qs.exists():
+            errors["name"] = "Ya existe una categoría con este nombre"
 
         return errors
     
@@ -94,12 +110,16 @@ class Category (models.Model):
         )
 
         return True, None
-    
+
     def update(self, name, description):
+        errors = self.validate(name, description, exclude_id=self.pk)
+        if errors:
+            return False, errors
+
         self.name = name or self.name
         self.description = description or self.description
-
         self.save()
+        return True, {}
 
 
 class Event(models.Model):
@@ -132,7 +152,7 @@ class Event(models.Model):
             errors["category"] = "Por favor seleccione una categoría"
         
         if scheduled_at:
-            buenos_aires_tz = timezone.get_fixed_timezone(-3 * 60) # UTC-3 de Buenos Aires
+            buenos_aires_tz = timezone.get_fixed_timezone(-3 * 60)
             
             now_in_ba = timezone.now().astimezone(buenos_aires_tz)
             today = now_in_ba.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -163,14 +183,65 @@ class Event(models.Model):
 
         return True, None
 
-    def update(self, title, description, scheduled_at, organizer, venue=None):
-        self.title = title or self.title
-        self.description = description or self.description
-        self.scheduled_at = scheduled_at or self.scheduled_at
-        self.organizer = organizer or self.organizer
+    def update(self, title=None, description=None, scheduled_at=None, organizer=None, category=None, venue=None):
+        if title is not None:
+            self.title = title
+        if description is not None:
+            self.description = description
+        if scheduled_at is not None:
+            self.scheduled_at = scheduled_at
+        if organizer is not None:
+            self.organizer = organizer
+        if category is not None:
+            self.category = category
         if venue is not None:
             self.venue = venue
         self.save()        
+
+        
+
+    def is_future(self):
+        time_now = timezone.now() - timedelta(hours=3)
+        return self.scheduled_at >= time_now     
+
+    def days_until_event(self):
+        """
+        Calcula los días restantes hasta el evento.
+        Retorna:
+        - Número positivo: días que faltan
+        - 0: es hoy
+        - Número negativo: días desde que pasó el evento
+        """
+        if self.scheduled_at:
+            event_date = self.scheduled_at.date()
+            today = timezone.now().date()
+            delta = event_date - today
+            return delta.days
+        return None
+    
+    def get_countdown_status(self):
+        """
+        Retorna el estado del evento basado en la fecha.
+        """
+        days = self.days_until_event()
+        if days is None:
+            return "Sin fecha programada"
+        elif days > 1:
+            return f"Faltan {days} días"
+        elif days == 1:
+            return "Falta 1 día"
+        elif days == 0:
+            return "Es hoy"
+        else:
+            return "Evento finalizado"
+    
+    @property
+    def is_upcoming(self):
+        """
+        Propiedad que indica si el evento es próximo (no ha pasado).
+        """
+        days = self.days_until_event()
+        return days is not None and days >= 0
 
     def average_rating(self):
         avg = self.ratings.aggregate(avg=Avg('rating'))['avg']
@@ -200,7 +271,7 @@ class Notification(models.Model):
         return self.title
     
     @classmethod
-    def validate(cls, title, message, priority):
+    def validate(cls, title, message, priority, event):
         errors = {}
         
         if message == "":
@@ -208,8 +279,37 @@ class Notification(models.Model):
 
         if priority not in [cls.Priority.HIGH, cls.Priority.NORMAL, cls.Priority.LOW]:
             errors["priority"] = "Prioridad no válida"
+            
+        if title is None or not str(title).strip():
+            errors["title"] = "El título no puede estar vacío."
+        elif len(title.strip()) > 200:
+            errors["title"] = "El título no puede superar los 200 caracteres."
+            
+        if cls.objects.filter(title=title.strip(), message=message.strip(), event=event).exists():
+            errors["duplicado"] = "Ya existe una notificación con el mismo título, mensaje y evento."
+        
+        # El evento debe tener al menos un ticket de usuario vendido
+        if event and event.tickets.count() == 0:
+            errors["sin_destinatarios"] = "No se puede enviar una notificación a un evento sin personas con entradas."
 
         return errors
+    
+    @classmethod
+    def notify_users_of_event_update(cls, event, message):
+        notification = cls.objects.create(
+            title="Cambios en el evento",
+            message=message,
+            priority= cls.Priority.HIGH,
+            event=event
+        )
+        
+        # Encuentra todos los usuarios que tienen entradas para el evento
+        tickets = Ticket.objects.filter(event=event)
+        users = [ticket.user for ticket in tickets]
+        
+        notification.users.set(users)
+        notification.save()
+        return notification
 
 class RefoundRequest(models.Model):
     approved = models.BooleanField(null=True, default=None)
@@ -231,8 +331,18 @@ class RefoundRequest(models.Model):
         if ticket_code == "":
             errors["ticket_code"] = "Por favor ingrese su codigo de ticket"
 
+        if cls.objects.filter(ticket_code=ticket_code).exists():
+            errors["ticket_code"] = "Ya existe una solicitud de reembolso para este ticket."
+
         if reason == "":
             errors["reason"] = "Por favor ingrese una razon de reembolso"
+
+        if len(reason) < 10:
+            errors["reason"] = "La razón debe tener al menos 10 caracteres."
+
+        if len(reason) > 200:
+            errors["reason"] = "La razón es demasiado extensa (máximo 1000 caracteres)."
+
 
         return errors
 
@@ -269,7 +379,32 @@ class Ticket(models.Model):
         return self.ticket_code
     
     @classmethod
-    def validate(cls, quantity, type):
+    def validate_event_date(cls, event):
+        """
+        Valida que el evento no haya ocurrido ya
+        """
+        if timezone.now() > event.scheduled_at:
+            return False, "No se pueden gestionar entradas para eventos que ya ocurrieron"
+        return True, None
+
+    @classmethod
+    def validate_capacity(cls, event, quantity, exclude_ticket_id=None):
+        """
+        Valida que haya suficiente capacidad disponible en el evento
+        """
+        query = cls.objects.filter(event=event)
+        if exclude_ticket_id:
+            query = query.exclude(id=exclude_ticket_id)
+        
+        tickets_vendidos = query.aggregate(total=models.Sum('quantity'))['total'] or 0
+        disponibles = event.venue.capacity - tickets_vendidos
+        
+        if quantity > disponibles:
+            return False, f"No hay suficientes entradas disponibles (quedan {disponibles})"
+        return True, None
+        
+    @classmethod
+    def validate(cls, quantity, type, user=None, event=None):
         errors = {}
 
         if quantity == "":
@@ -279,17 +414,31 @@ class Ticket(models.Model):
                 quantity = int(quantity)
                 if quantity <= 0:
                     errors["quantity"] = "La cantidad de entradas debe ser mayor a 0"
+                    
+                if event and quantity > 0:
+                    valid_capacity, error_msg = cls.validate_capacity(event, quantity)
+                    if not valid_capacity:
+                        errors["capacity"] = error_msg
             except ValueError:
                 errors["quantity"] = "La cantidad de entradas debe ser un número válido"
 
         if type == "":
             errors["type"] = "Por favor ingrese el tipo de entrada"
+            
+        if event:
+            valid_date, error_msg = cls.validate_event_date(event)
+            if not valid_date:
+                errors["event_date"] = error_msg
     
+        if user and event and not errors.get('quantity'):
+            limit_errors = cls.validate_ticket_limit(user, event, quantity)
+            errors.update(limit_errors)
+
         return errors
     
     @classmethod
     def new(cls, buy_date, ticket_code, quantity, type, event, user):
-        errors = Ticket.validate(quantity, type)
+        errors = Ticket.validate(quantity, type, user, event)
 
         if len(errors.keys()) > 0:
             return False, errors
@@ -301,7 +450,6 @@ class Ticket(models.Model):
             type=type,
             event=event,
             user=user,
-
         )
 
         return True, None
@@ -313,6 +461,72 @@ class Ticket(models.Model):
         self.type = type or self.type
 
         self.save()
+
+    @classmethod
+    def validate_ticket_limit(cls, user, event, quantity):
+        """
+        Valida que un usuario no pueda comprar más de 4 entradas por evento.
+        """
+        errors = {}
+        try:
+            quantity = int(quantity)
+            
+            if quantity > 4:
+                errors['quantity'] = "No puedes comprar más de 4 entradas por evento (límite excedido)"
+                return errors
+            
+            current_count = cls.get_user_tickets_count(user, event)
+            
+            total = current_count + quantity
+            if total > 4:
+                errors['quantity'] = f"No puedes comprar más de 4 entradas por evento (ya has comprado {current_count}, lo que excedería el límite)"
+        except ValueError:
+            errors['quantity'] = "La cantidad debe ser un número válido"
+        
+        return errors
+
+    @classmethod
+    def get_user_tickets_count(cls, user, event):
+        """
+        Calcula el total de tickets que un usuario ya ha comprado para un evento.
+        """
+        from django.db.models import Sum
+        
+        result = cls.objects.filter(user=user, event=event).aggregate(
+            total=Sum('quantity')
+        )
+        
+        return result['total'] or 0
+    
+    @classmethod
+    def validate_ticket_edit_limit(cls, user, event, new_quantity, ticket_being_edited):
+        """
+        Valida que al editar un ticket, el usuario no exceda el límite de 4 entradas por evento.
+        Excluye el ticket que se está editando del conteo actual.
+        """
+        errors = {}
+        try:
+            new_quantity = int(new_quantity)
+            
+            if new_quantity > 4:
+                errors['quantity'] = "No puedes tener más de 4 entradas por evento (límite excedido)"
+                return errors
+            
+            current_count = cls.objects.filter(
+                user=user, 
+                event=event
+            ).exclude(
+                id=ticket_being_edited.id
+            ).aggregate(
+                total=models.Sum('quantity')
+            )['total'] or 0
+            
+            total = current_count + new_quantity
+            if total > 4:
+                errors['quantity'] = f"No puedes tener más de 4 entradas por evento, el total sería {total}"
+        except ValueError:
+            errors['quantity'] = "La cantidad debe ser un número válido"
+
             
 
 class Comment(models.Model):
@@ -326,20 +540,32 @@ class Comment(models.Model):
         return self.title
 
     @classmethod
-    def validate(cls, title, text):
+    def validate(cls, title, text, user, event):
         errors = {}
+        
+        if not title.strip():
+            errors["title"] = "Por favor ingrese un título"
 
-        if title == "":
-            errors["title"] = "Por favor ingrese un titulo"
-            
-        if text == "":
+        if not text.strip():
             errors["text"] = "Por favor ingrese un comentario"
+
+        if len(title) > 200:
+            errors["title"] = "El título no puede tener más de 200 caracteres"
+
+        if len(text) > 1000:
+            errors["text"] = "El comentario no puede tener más de 1000 caracteres"
+        
+        if not isinstance(user, User) or not User.objects.filter(id=user.pk).exists():
+            errors["user"] = "El usuario no existe o no es válido"
+
+        if not isinstance(event, Event) or not Event.objects.filter(id=event.pk).exists():
+            errors["event"] = "El evento no existe o no es válido"
 
         return errors
     
     @classmethod
     def new(cls, title, text, user, event):
-        error = cls.validate(title, text)
+        error = cls.validate(title, text, user, event)
         
         if len(error.keys()) > 0:
             return False, error

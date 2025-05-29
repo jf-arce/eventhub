@@ -12,6 +12,7 @@ from django.db.models import Count
 from django.db.models.deletion import ProtectedError
 from datetime import timedelta
 from django.utils import timezone
+from django.db import models
 
 def register(request):
     if request.method == "POST":
@@ -70,12 +71,14 @@ def events(request):
     if request.user.is_organizer:
         events = Event.objects.filter(organizer=request.user)
     else:
-        events = Event.objects.all()
+        # time_now = datetime.now() - timedelta(hours=3)
+        current_time_aware = timezone.now() - timedelta(hours=3)
+        events = Event.objects.filter(scheduled_at__gte=current_time_aware)
     
     if date_filter:
         try:
             date_filter = datetime.strptime(date_filter, '%Y-%m-%d').date()
-            events = events.filter(scheduled_at__date__gte=date_filter)
+            events = events.filter(scheduled_at_date_gte=date_filter)
         except ValueError:
             pass
     
@@ -103,7 +106,6 @@ def events(request):
             "venues": venues
         },
     )
-
 @login_required
 def event_detail(request, id):
     event = get_object_or_404(Event, id=id)
@@ -117,6 +119,8 @@ def event_detail(request, id):
     user_has_ticket = Ticket.objects.filter(event=event, user=request.user).exists()
     avg_rating = event.average_rating()
 
+    
+    days_remaining = event.days_until_event()
     return render(
         request,
         'app/event_detail.html',
@@ -128,9 +132,10 @@ def event_detail(request, id):
             'editing': editing,
             'user_has_ticket': user_has_ticket,  
             "comments": comments,
-            "user_is_organizer": request.user.is_organizer,
+            "user_is_organizer": request.user == event.organizer, 
             "user_is_admin": request.user.is_superuser,
             "avg_rating": avg_rating, 
+            "days_remaining": days_remaining,
         }
     )
 
@@ -172,6 +177,7 @@ def event_form(request, id=None):
                     "event": request.POST,
                     "user_is_organizer": user.is_organizer,
                     "categorys": Category.objects.filter(is_active=True),
+                    "venues": Venue.objects.all().order_by('name'),
                     "error": error,
                 },
             )
@@ -269,7 +275,31 @@ def event_form(request, id=None):
                 )
         else:
             event = get_object_or_404(Event, pk=id)
-            event.update(title, description, scheduled_at, request.user, venue)
+            
+            notification_required = False
+            message = f"Estimado cliente, el evento '{event.title}' ha sido modificado:\n"
+            event_changes = []
+            
+            old_scheduled_at = event.scheduled_at.replace(second=0, microsecond=0)
+            new_scheduled_at = scheduled_at.replace(second=0, microsecond=0)
+
+            if old_scheduled_at.date() != new_scheduled_at.date():
+                event_changes.append(f"- 📅Nueva fecha: {new_scheduled_at.date().strftime('%d/%m/%Y')}")
+                notification_required = True
+
+            if old_scheduled_at.time() != new_scheduled_at.time():
+                event_changes.append(f"- ⌚Nueva hora: {new_scheduled_at.time().strftime('%H:%M')}")
+                notification_required = True
+
+            if event.venue != venue:
+                event_changes.append(f"- 📍Nueva ubicación: {venue}")
+                notification_required = True
+
+            if notification_required:
+                message += "\n".join(event_changes)
+                Notification.notify_users_of_event_update(event, message)
+                
+            event.update(title, description, scheduled_at, request.user, category, venue)
 
         return redirect("events")
 
@@ -370,13 +400,35 @@ def purchase_ticket(request, event_id):
         messages.error(request, "Los organizadores no pueden comprar tickets para sus propios eventos")
         return redirect('event_detail', id=event_id)
     
+    if timezone.now() > event.scheduled_at:
+        messages.error(request, "No se pueden comprar entradas para eventos que ya ocurrieron")
+        return redirect('event_detail', id=event_id)
+    
     if request.method == "POST":
         try:
             quantity = request.POST.get("cantidad")
             ticket_type = request.POST.get("tipoEntrada", "GENERAL")
             
-            ticket_code = str(uuid.uuid4())[:8].upper()
+            if ticket_type not in [choice[0] for choice in Ticket.TICKET_TYPES]:
+                messages.error(request, "Tipo de entrada no válido")
+                return render(request, 'app/purchase_ticket.html', {'event': event})
             
+            try:
+                quantity = int(quantity)
+                if quantity <= 0:
+                    messages.error(request, "La cantidad debe ser mayor a 0")
+                    return render(request, 'app/purchase_ticket.html', {'event': event})
+            except ValueError:
+                messages.error(request, "La cantidad debe ser un número válido")
+                return render(request, 'app/purchase_ticket.html', {'event': event})
+            
+            tickets_vendidos = Ticket.objects.filter(event=event).aggregate(
+                total=models.Sum('quantity'))['total'] or 0
+            if tickets_vendidos + quantity > event.venue.capacity:
+                messages.error(request, f"No hay suficientes entradas disponibles. Quedan {event.venue.capacity - tickets_vendidos} entradas.")
+                return render(request, 'app/purchase_ticket.html', {'event': event})
+            
+            ticket_code = str(uuid.uuid4())[:8].upper()
             buy_date = timezone.now().date()
             
             success, errors = Ticket.new(
@@ -441,24 +493,54 @@ def edit_ticket(request, event_id, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     
     if not (request.user == ticket.user or request.user == event.organizer):
+        messages.error(request, "No tienes permisos para editar este ticket")
         return redirect('events')
+    
+    if timezone.now() > event.scheduled_at:
+        messages.error(request, "No se pueden modificar entradas para eventos que ya ocurrieron")
+        return redirect('view_ticket', event_id=event_id)
     
     if request.method == 'POST':
         ticket_type = request.POST.get('ticket_type')
         quantity = request.POST.get('quantity')
         
+        if ticket_type not in [choice[0] for choice in Ticket.TICKET_TYPES]:
+            messages.error(request, "Tipo de entrada no válido")
+            return render(request, 'app/edit_ticket.html', {
+                'event': event,
+                'ticket': ticket
+            })
+        
         try:
             quantity = int(quantity)
             if quantity < 1:
-                raise ValueError("La cantidad debe ser mayor a 0")
-                
+                messages.error(request, "La cantidad debe ser mayor a 0")
+                return render(request, 'app/edit_ticket.html', {
+                    'event': event,
+                    'ticket': ticket
+                })
+            
+            tickets_vendidos = Ticket.objects.filter(event=event).exclude(
+                id=ticket.pk).aggregate(total=models.Sum('quantity'))['total'] or 0
+            if tickets_vendidos + quantity > event.venue.capacity:
+                messages.error(request, f"La cantidad excede la capacidad disponible del evento. Máximo disponible: {event.venue.capacity - tickets_vendidos}")
+                return render(request, 'app/edit_ticket.html', {
+                    'event': event,
+                    'ticket': ticket
+                })
+            
             ticket.type = ticket_type
             ticket.quantity = quantity
             ticket.save()
+            messages.success(request, "Ticket actualizado exitosamente")
             return redirect('view_ticket', event_id=event_id)
             
         except ValueError:
-            pass
+            messages.error(request, "La cantidad debe ser un número válido")
+            return render(request, 'app/edit_ticket.html', {
+                'event': event,
+                'ticket': ticket
+            })
     
     return render(request, 'app/edit_ticket.html', {
         'event': event,
@@ -558,33 +640,63 @@ def categorys(request):
 
 @login_required
 def category_form(request, id=None):
-    print("Llamando a category_form con ID:", id)
     user = request.user
 
     if not (user.is_organizer or user.is_superuser):
         return redirect("categorys")
 
+    errors = {}
+    category = {}
+
     if request.method == "POST":
-        name = request.POST.get("name")
-        description = request.POST.get("description")
+        name = request.POST.get("name", "").strip()
+        description = request.POST.get("description", "").strip()
+        exclude_id = id if id is not None else None
 
         if id is None:
+            errors = Category.validate(name, description, exclude_id=exclude_id)
+            if errors:
+                category = {"name": name, "description": description}
+                return render(
+                    request,
+                    "app/categorys/category_form.html",
+                    {
+                        "category": category,
+                        "errors": errors,
+                        "user_is_organizer": user.is_organizer,
+                    },
+                )
             Category.new(name, description)
+
         else:
             category = get_object_or_404(Category, pk=id)
-            category.update(name, description)
+            success, errors = category.update(name, description)
+            if not success:
+                category.name = name
+                category.description = description
+                return render(
+                    request,
+                    "app/categorys/category_form.html",
+                    {
+                        "category": category,
+                        "errors": errors,
+                        "user_is_organizer": user.is_organizer,
+                    },
+                )
 
         return redirect("categorys")
 
-    category = {}
     if id is not None:
         category = get_object_or_404(Category, pk=id)
 
     return render(
         request,
         "app/categorys/category_form.html",
-        {"category": category, 
-        "user_is_organizer": request.user.is_organizer},
+        {
+            "category": category,
+            "errors": errors,
+            "user_is_organizer": user.is_organizer,
+        },
     )
 
 @login_required
@@ -753,6 +865,17 @@ def refound_request(request, id=None):
         ticket_code = request.POST.get("ticket_code")
         reason = request.POST.get("reason")
 
+        errors = RefoundRequest.validate(ticket_code, reason)
+
+        if errors:
+            return render(
+                        request,
+                        "app/refound/refound_request.html",
+                        {
+                            "errors": errors,
+                        },
+                    )
+
         if ticket_code:
             try:
                 ticket_encontrado = Ticket.objects.get(ticket_code=ticket_code)
@@ -824,6 +947,7 @@ def refound_request(request, id=None):
         },
     )
     
+
 def notifications(request):
     user = request.user
     events_not_found = not Event.objects.exists()
@@ -980,10 +1104,16 @@ def notification_form(request, id=None):
         priority = request.POST.get("priority")
         event_id = request.POST.get("event")
         destination = request.POST.get("destination")
-        
-        Notification.validate(title, message, priority)
 
         event = get_object_or_404(Event, pk=event_id)
+        
+        errors = Notification.validate(title, message, priority, event)
+        print("Errors:", errors)
+        
+        if errors:
+            for err in errors.values():
+                messages.error(request, err)
+            return redirect('notification_form')
         
         if destination == "all":
             # Obtener todos los usuarios con tickets para el evento
@@ -1054,10 +1184,10 @@ def notification_update(request, id):
         priority = request.POST.get("priority")
         
         print(title, message, priority)
-
-        Notification.validate(title, message, priority)
         
         notification = get_object_or_404(Notification, pk=id)
+        
+        Notification.validate(title, message, priority, notification.event)
         
         notification.title = title or notification.title
         notification.message = message or notification.message
@@ -1098,3 +1228,57 @@ def mark_all_as_read(request):
     request.user.notifications.filter(is_read=False).update(is_read=True)
     
     return redirect('user_notifications')
+
+@login_required
+def check_ticket_limit(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    cantidad = int(request.GET.get('cantidad', 1))
+    
+    current_count = Ticket.get_user_tickets_count(user=request.user, event=event)
+    
+    success = (current_count + cantidad) <= 4
+    
+    return JsonResponse({
+        'success': success,
+        'current_count': current_count,
+        'total': current_count + cantidad,
+        'remaining': max(0, 4 - current_count)
+    })
+
+@login_required
+def check_ticket_limit_for_edit(request, event_id, ticket_id):
+    """
+    Endpoint AJAX para verificar límites al editar un ticket específico
+    """
+    event = get_object_or_404(Event, id=event_id)
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    cantidad = int(request.GET.get('cantidad', 1))
+    
+    if not (request.user == ticket.user or request.user == event.organizer):
+        return JsonResponse({'success': False, 'error': 'Sin permisos'})
+    
+    if request.user.is_organizer:
+        return JsonResponse({
+            'success': True,
+            'current_count': 0,
+            'total': cantidad,
+            'remaining': float('inf')
+        })
+    
+    current_count = Ticket.objects.filter(
+        user=ticket.user, 
+        event=event
+    ).exclude(
+        id=ticket.pk
+    ).aggregate(
+        total=models.Sum('quantity')
+    )['total'] or 0
+    
+    success = (current_count + cantidad) <= 4
+    
+    return JsonResponse({
+        'success': success,
+        'current_count': current_count,
+        'total': current_count + cantidad,
+        'remaining': max(0, 4 - current_count)
+    })

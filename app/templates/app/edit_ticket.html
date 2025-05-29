@@ -7,7 +7,7 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title mb-3">Ticket para: {{ event.title }}</h5>
-                    <form method="POST">
+                    <form method="POST" id="editTicketForm">
                         {% csrf_token %}
                         <div class="mb-3">
                             <label class="form-label">Tipo de Ticket</label>
@@ -32,6 +32,7 @@
                                     id="cantidad"
                                     value="{{ ticket.quantity }}"
                                     min="1"
+                                    max="4"
                                     class="form-control text-center"
                                     required
                                 />
@@ -43,8 +44,10 @@
                                     +
                                 </button>
                             </div>
+                            <div id="limitWarning" class="text-warning small mt-1" style="display: none;"></div>
+                            <div id="limitError" class="text-danger small mt-1" style="display: none;"></div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                        <button type="submit" class="btn btn-primary" id="saveButton">Guardar Cambios</button>
                         <a href="{% url 'view_ticket' event_id=event.id %}" class="btn btn-secondary">Cancelar</a>
                     </form>
                 </div>
@@ -54,16 +57,97 @@
 </div>
 
 <script>
+    let isOrganizer = {{ user.is_organizer|yesno:"true,false" }};
+    
     function increment() {
         const input = document.getElementById("cantidad");
-        input.value = parseInt(input.value || 0) + 1;
+        const currentValue = parseInt(input.value || 0);
+        
+        if (currentValue < 4) {
+            input.value = currentValue + 1;
+            if (!isOrganizer) {
+                checkTicketLimit();
+            }
+        }
     }
 
     function decrement() {
         const input = document.getElementById("cantidad");
-        if (parseInt(input.value) > 1) {
-            input.value = parseInt(input.value) - 1;
+        const currentValue = parseInt(input.value);
+        
+        if (currentValue > 1) {
+            input.value = currentValue - 1;
+            if (!isOrganizer) {
+                checkTicketLimit();
+            }
         }
     }
+    
+    function checkTicketLimit() {
+        if (isOrganizer) return;
+        
+        const cantidad = document.getElementById("cantidad").value;
+        const eventId = {{ event.id }};
+        const ticketId = {{ ticket.id }};
+        
+        fetch(`/events/${eventId}/tickets/${ticketId}/check_limit/?cantidad=${cantidad}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector("[name=csrfmiddlewaretoken]").value,
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            const warningDiv = document.getElementById("limitWarning");
+            const errorDiv = document.getElementById("limitError");
+            const saveButton = document.getElementById("saveButton");
+            
+            warningDiv.style.display = "none";
+            errorDiv.style.display = "none";
+            saveButton.disabled = false;
+            
+            if (!data.success) {
+                errorDiv.textContent = `No puedes tener más de 4 entradas por evento. Con esta modificación, el total sería: ${data.total}`;
+                errorDiv.style.display = "block";
+                saveButton.disabled = true;
+            } else if (data.total >= 3) {
+                warningDiv.textContent = `Total de tickets: ${data.total}/4`;
+                warningDiv.style.display = "block";
+            }
+        })
+        .catch(error => {
+            console.error('Error checking ticket limit:', error);
+        });
+    }
+    
+    document.getElementById("cantidad").addEventListener("input", function() {
+        const value = parseInt(this.value);
+        if (value > 4) {
+            this.value = 4;
+        } else if (value < 1) {
+            this.value = 1;
+        }
+        
+        if (!isOrganizer) {
+            checkTicketLimit();
+        }
+    });
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        if (!isOrganizer) {
+            checkTicketLimit();
+        }
+    });
+    
+    document.getElementById("editTicketForm").addEventListener("submit", function(e) {
+        if (!isOrganizer) {
+            const cantidad = parseInt(document.getElementById("cantidad").value);
+            if (cantidad > 4 || cantidad < 1) {
+                e.preventDefault();
+                alert("La cantidad debe estar entre 1 y 4 entradas");
+                return false;
+            }
+        }
+    });
 </script>
 {% endblock %}
