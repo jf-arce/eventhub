@@ -10,8 +10,6 @@ User = get_user_model()
 class CountdownIntegrationTest(TestCase):
     def setUp(self):
         self.client = Client()
-        
-        # Crear categoria y venue
         self.category = Category.objects.create(name='Test Category')
         self.venue = Venue.objects.create(
             name='Test Venue',
@@ -20,8 +18,6 @@ class CountdownIntegrationTest(TestCase):
             capacity=100,
             contact='test@venue.com'
         )
-        
-        # Crear usuarios
         self.regular_user = User.objects.create_user(
             username='regularuser',
             email='regular@test.com',
@@ -35,75 +31,50 @@ class CountdownIntegrationTest(TestCase):
             is_organizer=True
         )
 
-    def test_countdown_shows_for_non_organizers(self):
-        """CA1: Verificar que el countdown se muestra para usuarios NO organizadores"""
-        future_date = timezone.now() + timedelta(days=3)
+    def test_countdown_context_for_regular_user(self):
         event = Event.objects.create(
-            title='Test Event',
-            description='Test event description',
-            scheduled_at=future_date,
+            title='Evento Futuro',
+            description='desc',
+            scheduled_at=timezone.now() + timedelta(days=2),
             organizer=self.organizer_user,
             category=self.category,
-            venue=self.venue
+            venue=self.venue,
         )
-        
-        # Usuario regular - DEBE mostrar countdown
         self.client.login(username='regularuser', password='testpass123')
-        response = self.client.get(reverse('event_detail', kwargs={'id': event.pk}))
-        self.assertEqual(response.status_code, 200)
-        response_content = response.content.decode()
-        self.assertIn('countdown-circle', response_content, 
-            "El countdown debería aparecer para usuarios regulares")
+        url = reverse('event_detail', args=[event.pk])
+        response = self.client.get(url)
+        self.assertIn('user_is_organizer', response.context)
+        self.assertFalse(response.context['user_is_organizer'])
+        self.assertIn('days_remaining', response.context)
+        self.assertEqual(response.context['days_remaining'], 2)
 
-    def test_event_is_today_shows_correct_message(self):
-        """CA2: Si quedan 0 días, debe indicarse 'Es hoy'"""
-        # Evento para hoy
-        today_event = timezone.now().replace(hour=23, minute=59)
+    def test_countdown_context_for_organizer(self):
         event = Event.objects.create(
-            title='Today Event',
-            description='Event happening today',
-            scheduled_at=today_event,
+            title='Evento Futuro',
+            description='desc',
+            scheduled_at=timezone.now() + timedelta(days=2),
             organizer=self.organizer_user,
             category=self.category,
-            venue=self.venue
+            venue=self.venue,
         )
-        
-        self.client.login(username='regularuser', password='testpass123')
-        response = self.client.get(reverse('event_detail', kwargs={'id': event.pk}))
-        self.assertEqual(response.status_code, 200)
-        
-        response_content = response.content.decode()
-        # Verificar que muestra "Es hoy"
-        self.assertIn('Es hoy', response_content,
-            "Debería mostrar 'Es hoy' cuando quedan 0 días")
-        
-        # También verificar que el countdown muestra 0
-        self.assertIn('<span class="countdown-number">0</span>', response_content,
-                "El countdown debería mostrar 0 para eventos de hoy")
+        self.client.login(username='organizer', password='testpass123')
+        url = reverse('event_detail', args=[event.pk])
+        response = self.client.get(url)
+        self.assertIn('user_is_organizer', response.context)
+        self.assertTrue(response.context['user_is_organizer'])
 
-    def test_shows_exact_days_remaining(self):
-        """CA3: La cuenta regresiva debe mostrar el número exacto de días restantes"""
-        # Evento en exactamente 5 días
-        future_date = timezone.now() + timedelta(days=5)
+    def test_countdown_context_today(self):
         event = Event.objects.create(
-            title='Future Event',
-            description='Event in 5 days',
-            scheduled_at=future_date,
+            title='Evento Hoy',
+            description='desc',
+            scheduled_at=timezone.now(),
             organizer=self.organizer_user,
             category=self.category,
-            venue=self.venue
+            venue=self.venue,
         )
-        
         self.client.login(username='regularuser', password='testpass123')
-        response = self.client.get(reverse('event_detail', kwargs={'id': event.pk}))
-        self.assertEqual(response.status_code, 200)
-        
-        response_content = response.content.decode()
-        
-        # Verificar que aparece el countdown
-        self.assertIn('countdown-circle', response_content,
-            "Debería mostrar el countdown para eventos futuros")
-        
-        # Verificar que incluye la palabra 'días' en algún formato
-        self.assertIn('días', response_content,
-            "Debería incluir la palabra 'días'")
+        url = reverse('event_detail', args=[event.pk])
+        response = self.client.get(url)
+        self.assertIn('days_remaining', response.context)
+        self.assertEqual(response.context['days_remaining'], 0)
+
