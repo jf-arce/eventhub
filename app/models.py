@@ -5,6 +5,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from datetime import datetime, timedelta
 from django.utils import timezone
 
+
 class User(AbstractUser):
     is_organizer = models.BooleanField(default=False)
 
@@ -195,7 +196,11 @@ class Event(models.Model):
         if venue is not None:
             self.venue = venue
 
-        self.save()        
+        self.save()
+
+    def is_future(self):
+        time_now = timezone.now() - timedelta(hours=3)
+        return self.scheduled_at >= time_now     
 
 class Notification(models.Model):
     class Priority(models.TextChoices):

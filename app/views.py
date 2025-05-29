@@ -71,7 +71,9 @@ def events(request):
     if request.user.is_organizer:
         events = Event.objects.filter(organizer=request.user)
     else:
-        events = Event.objects.all()
+        # time_now = datetime.now() - timedelta(hours=3)
+        current_time_aware = timezone.now() - timedelta(hours=3)
+        events = Event.objects.filter(scheduled_at__gte=current_time_aware)
     
     if date_filter:
         try:
