@@ -8,7 +8,7 @@
         </div>
 
         <div class="d-flex justify-content-end gap-2 mb-3 mt-2">
-            {% if user_is_organizer %}
+            {% if user.is_organizer %}
                 <a href="{% url 'event_edit' event.id %}" class="btn btn-outline-primary me-2">
                     <i class="bi bi-pencil me-1"></i>Editar
                 </a>
@@ -23,9 +23,35 @@
     <div class="row">
         <div class="card mt-2">
             <div class="card-body">
-                <h5 class="card-title">Detalles del Evento</h5>
-                <p class="card-text">{{ event.description }}</p>
-                <div class="mt-4">
+                <div class="row">
+                    <div class="{% if not user.is_organizer %}col-md-8{% else %}col-md-12{% endif %}">
+                        <h5 class="card-title">Detalles del Evento</h5>
+                        <p class="card-text mb-2">{{ event.description }}</p>
+                    </div>
+
+                    {% if not user.is_organizer %}
+                    <div class="col-md-4 border-start">
+                        <div class="text-center py-2">
+                            <div class="countdown-circle mx-auto mb-2 d-flex align-items-center justify-content-center">
+                                <span class="countdown-number">{{ days_remaining }}</span>
+                            </div>
+                            <h6 class="mb-0">
+                                {% if days_remaining > 1 %}
+                                    Faltan {{ days_remaining }} días
+                                {% elif days_remaining == 1 %}
+                                    Falta 1 día
+                                {% elif days_remaining == 0 %}
+                                    Es hoy
+                                {% else %}
+                                    Evento finalizado
+                                {% endif %}
+                            </h6>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="mt-2">
                     <div class="d-flex align-items-center mb-3">
                         <div class="bg-light rounded-circle p-2 me-3">
                             <i class="bi bi-calendar-event text-primary"></i>
@@ -70,7 +96,6 @@
             </div>
         </div>
 
-        <!-- Sección de calificaciones y reseñas -->
         {% include "app/rating/ratings_section.html" %}
     </div>
     {% include 'app/comments/event_comments.html' with comments=comments%}
@@ -127,6 +152,20 @@
         border: 1px solid #ced4da;
         border-radius: 0.25rem;
         min-height: 100px;
+    }
+    
+    .countdown-circle {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        border: 2px solid #0d6efd;
+    }
+
+    .countdown-number {
+        font-size: 1rem;
+        font-weight: bold;
+        color: #0d6efd;
     }
 </style>
 {% endblock %}
