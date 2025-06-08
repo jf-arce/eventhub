@@ -1,0 +1,46 @@
+# Ignorar cachés de Python para evitar archivos compilados que no son necesarios
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignorar bases de datos locales que no deben ir a la imagen
+*.db
+*.sqlite3
+
+# Ignorar archivos de configuración de entorno para no subir datos sensibles
+.env
+.env.*
+
+# Ignorar archivos de log generados por la app
+*.log
+
+# Ignorar el repositorio git y su historial
+.git/
+
+# Ignorar configuraciones de editores y IDEs
+.idea/
+.vscode/
+
+# Ignorar archivos de Docker que no deben copiarse en la imagen
+Dockerfile
+docker-compose.yml
+
+# Artifacts de testing
+.coverage
+*.cover
+htmlcov/
+.pytest_cache/
+.tox/
+nosetests.xml
+test-results/
+
+# Entornos virtuales locales
+.venv/
+venv/
+env/
+
+# Archivos temporales del sistema operativo
+*.swp
+.DS_Store
+Thumbs.db
