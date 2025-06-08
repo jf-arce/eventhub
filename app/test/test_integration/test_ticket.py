@@ -200,3 +200,68 @@ class TicketPurchaseLimitIntegrationTest(TestCase):
         self.assertEqual(data2['current_count'], 2)
         self.assertEqual(data2['total'], 5)
         self.assertEqual(data2['remaining'], 2)
+    
+    def test_ticket_purchase_exceeding_limit_direct_post(self):
+        """
+        Prueba que verifica que el servidor rechaza compras que exceden el límite vía POST directo
+        """
+        self.client.login(username='regular_user', password='password123')
+        purchase_data = {
+            'cantidad': '5',
+            'tipoEntrada': 'GENERAL',
+            'numeroTarjeta': '1234567890123456',
+            'fechaExpiracion': (timezone.now() + timezone.timedelta(days=30)).strftime('%Y-%m-%d'),
+            'cvv': '123',
+            'nombreTarjeta': 'Test User',
+            'terminos': 'on'
+        }
+        response = self.client.post(
+            reverse('purchase_ticket', kwargs={'event_id': self.event.pk}),
+            data=purchase_data
+        )
+        self.assertEqual(Ticket.objects.count(), 0)
+        
+        messages_list = list(get_messages(response.wsgi_request))
+        error_found = any(
+            "límite" in str(m).lower() or "exced" in str(m).lower() or "más de 4" in str(m).lower() or "máximo" in str(m).lower()
+            for m in messages_list
+        )
+        self.assertTrue(error_found, "No se encontró mensaje de error sobre límite de tickets")
+
+    def test_check_ticket_limit_ajax_endpoint(self):
+        """
+        Prueba que verifica el correcto funcionamiento del endpoint AJAX que valida el límite
+        """
+        Ticket.objects.create(
+            event=self.event,
+            user=self.user,
+            buy_date=timezone.now().date(),
+            ticket_code="ABC123",
+            quantity=2,
+            type="GENERAL"
+        )
+        self.client.login(username='regular_user', password='password123')
+        
+        response = self.client.get(
+            reverse('check_ticket_limit', kwargs={'event_id': self.event.pk}),
+            {'cantidad': 3},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertFalse(data['success'])
+        self.assertEqual(data['current_count'], 2)
+        self.assertEqual(data['total'], 5)
+        self.assertEqual(data['remaining'], 2)
+        
+        response_valid = self.client.get(
+            reverse('check_ticket_limit', kwargs={'event_id': self.event.pk}),
+            {'cantidad': 1},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response_valid.status_code, 200)
+        data_valid = json.loads(response_valid.content)
+        self.assertTrue(data_valid['success'])
+        self.assertEqual(data_valid['current_count'], 2)
+        self.assertEqual(data_valid['total'], 3)
+        self.assertEqual(data_valid['remaining'], 2)

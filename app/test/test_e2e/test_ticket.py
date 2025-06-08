@@ -73,21 +73,6 @@ class TicketPurchaseE2ETestCase(BaseE2ETest):
         self.assertIn("purchase", self.page.url)
         self.assertNotIn("viewTickets", self.page.url)
 
-    def test_ticket_purchase_exceeding_limit_direct_post(self):
-        """Prueba que verifica que el servidor rechaza compras que exceden el límite vía POST directo"""
-        self.login_as_regular_user()
-        self.page.goto(f"{self.live_server_url}/events/{self.event.pk}/purchase/")
-        csrf_token = self.page.get_attribute("input[name='csrfmiddlewaretoken']", "value")
-        response = self.page.request.post(
-            f"{self.live_server_url}/events/{self.event.pk}/purchase/",
-            data={
-                'csrfmiddlewaretoken': csrf_token,
-                'cantidad': '5',
-                'tipoEntrada': 'GENERAL'
-            }
-        )
-        self.assertNotEqual(response.status, 200)
-
     def test_ticket_purchase_accumulation_exceeds_limit(self):
         """Prueba que verifica que la suma de entradas previas más nuevas excede el límite permitido"""
         Ticket.objects.create(
@@ -137,43 +122,6 @@ class TicketPurchaseE2ETestCase(BaseE2ETest):
         self.fill_purchase_form()
         self.page.click("button:has-text('Confirmar compra')")
         self.assertIn("purchase", self.page.url)
-
-    def test_check_ticket_limit_ajax_endpoint(self):
-        """Prueba que verifica el correcto funcionamiento del endpoint AJAX que valida el límite"""
-        Ticket.objects.create(
-            event=self.event,
-            user=self.user,
-            buy_date=timezone.now().date(),
-            ticket_code="ABC123",
-            quantity=2,
-            type="GENERAL"
-        )
-        self.login_as_regular_user()
-        self.page.goto(f"{self.live_server_url}/events/{self.event.pk}/purchase/")
-        response = self.page.evaluate(f"""
-            fetch('/events/{self.event.pk}/check_ticket_limit/?cantidad=3', {{
-                headers: {{
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': document.querySelector("[name=csrfmiddlewaretoken]").value,
-                }},
-            }}).then(response => response.json())
-        """)
-        self.assertFalse(response['success'])
-        self.assertEqual(response['current_count'], 2)
-        self.assertEqual(response['total'], 5)
-        self.assertEqual(response['remaining'], 2)
-        response_valid = self.page.evaluate(f"""
-            fetch('/events/{self.event.pk}/check_ticket_limit/?cantidad=1', {{
-                headers: {{
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': document.querySelector("[name=csrfmiddlewaretoken]").value,
-                }},
-            }}).then(response => response.json())
-        """)
-        self.assertTrue(response_valid['success'])
-        self.assertEqual(response_valid['current_count'], 2)
-        self.assertEqual(response_valid['total'], 3)
-        self.assertEqual(response_valid['remaining'], 2)
 
     def test_input_quantity_validation(self):
         """Prueba que verifica que el input de cantidad se corrige si se excede el valor máximo permitido"""
