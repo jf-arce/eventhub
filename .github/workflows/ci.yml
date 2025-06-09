@@ -104,7 +104,7 @@ jobs:
           echo "ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}" >> .env
 
       - name: Install Playwright
-        run: python -m playwright install-with-deps chromium
+        run: python -m playwright install --with-deps chromium
 
       - name: Run E2E tests
         run: python manage.py test app/test/test_e2e
