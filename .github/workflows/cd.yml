@@ -1,6 +1,9 @@
 name: Continuous Delivery
 
 on:
+  push:
+    branches:
+      - main
   release:
     types: [published]
   workflow_run:
@@ -9,11 +12,15 @@ on:
     types:
       - completed
 
+
 jobs:
   cd:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'release' }}
-    
+    if: >
+      github.event_name == 'release' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      github.event_name == 'push'
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
