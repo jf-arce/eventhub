@@ -1,17 +1,16 @@
+import importlib.util
+from datetime import timedelta
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from datetime import timedelta
-from app.models import Event, Category, Venue
+
+from app.models import Category, Event, Venue
+
 from .base import BaseE2ETest
 
-User = get_user_model()
+PLAYWRIGHT_AVAILABLE = importlib.util.find_spec("playwright") is not None
 
-try:
-    from playwright.sync_api import sync_playwright
-    PLAYWRIGHT_AVAILABLE = True
-except ImportError:
-    PLAYWRIGHT_AVAILABLE = False
 
 
 @pytest.mark.skipif(not PLAYWRIGHT_AVAILABLE, reason="Playwright not installed")
@@ -21,14 +20,14 @@ class EventCountdownE2ETest(BaseE2ETest):
     def setUp(self):
         super().setUp()
         
-        self.organizer_user = User.objects.create_user(
+        self.organizer_user = get_user_model().objects.create_user(
             username='organizer_test',
             email='organizer@test.com',
             password='password123',
             is_organizer=True
         )
         
-        self.regular_user = User.objects.create_user(
+        self.regular_user = get_user_model().objects.create_user(
             username='regular_test',
             email='regular@test.com',
             password='password123',
@@ -50,7 +49,7 @@ class EventCountdownE2ETest(BaseE2ETest):
         """Crea un evento con fecha específica basada en días desde hoy"""
         event_date = timezone.now() + timedelta(days=days_from_now)
         return Event.objects.create(
-            title=f'Evento Test',
+            title='Evento Test',
             description='Descripción del evento',
             scheduled_at=event_date,
             organizer=self.organizer_user,

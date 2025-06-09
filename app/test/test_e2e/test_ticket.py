@@ -1,9 +1,13 @@
 import os
+
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
 from django.utils import timezone
-from app.models import User, Event, Category, Venue, Ticket
+
+from app.models import Category, Event, Ticket, User, Venue
+
 from .base import BaseE2ETest
+
 
 class TicketPurchaseE2ETestCase(BaseE2ETest):
     def setUp(self):

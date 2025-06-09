@@ -1,7 +1,10 @@
 from unittest.mock import patch
+
 from django.test import TestCase
 from django.utils import timezone
-from app.models import Event, Ticket, Venue, Category, User
+
+from app.models import Category, Event, Ticket, User, Venue
+
 
 class TicketLimitTestCase(TestCase):
     def setUp(self):

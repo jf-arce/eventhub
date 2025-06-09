@@ -1,18 +1,29 @@
-import datetime, uuid
-from datetime import datetime
+import uuid
+from datetime import datetime, timedelta
+
+from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404, redirect
-from django.utils import timezone
-from django.http import JsonResponse
-from django.contrib import messages
-from .models import Event, User, Rating, Ticket, Comment, Category, Venue, RefoundRequest, Notification
-from .forms import RatingForm 
+from django.db import models
 from django.db.models import Count
 from django.db.models.deletion import ProtectedError
-from datetime import timedelta
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.db import models
+
+from .forms import RatingForm
+from .models import (
+    Category,
+    Comment,
+    Event,
+    Notification,
+    Rating,
+    RefoundRequest,
+    Ticket,
+    User,
+    Venue,
+)
+
 
 def register(request):
     if request.method == "POST":
@@ -452,7 +463,7 @@ def purchase_ticket(request, event_id):
                     'errors': errors or {}
                 })
                 
-        except Exception as e:
+        except Exception:
             messages.error(request, "Error al procesar la compra. Por favor intente nuevamente.")
             return render(request, 'app/purchase_ticket.html', {
                 'event': event
@@ -485,8 +496,6 @@ def view_ticket(request, event_id):
         'user_is_organizer': request.user.is_organizer
     })
 
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Event, Ticket
 
 def edit_ticket(request, event_id, ticket_id):
     event = get_object_or_404(Event, id=event_id)
@@ -1053,7 +1062,6 @@ def refound_edit(request, id):
         
         return redirect("refounds")
     
-    comment = get_object_or_404(RefoundRequest, pk=id)
     return redirect("refounds")
 
 @login_required

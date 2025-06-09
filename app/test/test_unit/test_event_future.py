@@ -1,10 +1,11 @@
-import datetime
+
+from datetime import timedelta
 
 from django.test import TestCase
 from django.utils import timezone
-from datetime import timedelta
 
 from app.models import Event
+
 
 class EventModelTest(TestCase):
     
