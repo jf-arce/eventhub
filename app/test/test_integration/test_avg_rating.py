@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
-from app.models import Event, User, Category, Venue, Rating
+
+from app.models import Category, Event, Rating, User, Venue
 
 
 class AvgRatingIntegrationTest(TestCase):

@@ -1,14 +1,11 @@
 
 from datetime import timedelta
 
-from django.urls import reverse
 from django.utils import timezone
-
-from app.models import Event, User, Category, Venue
-from django.utils import timezone
-from app.models import User
-from app.test.test_e2e.base import BaseE2ETest
 from playwright.sync_api import expect
+
+from app.models import Category, Event, User, Venue
+from app.test.test_e2e.base import BaseE2ETest
 
 
 class NoFutureEventsTest(BaseE2ETest):

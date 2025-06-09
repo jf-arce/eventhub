@@ -1,10 +1,13 @@
-from django.test import TestCase, Client
-from django.urls import reverse
-from django.utils import timezone
 import json
 import uuid
-from app.models import Event, Ticket, Venue, Category, User
+
 from django.contrib.messages import get_messages
+from django.test import Client, TestCase
+from django.urls import reverse
+from django.utils import timezone
+
+from app.models import Category, Event, Ticket, User, Venue
+
 
 class TicketPurchaseLimitIntegrationTest(TestCase):
     def setUp(self):

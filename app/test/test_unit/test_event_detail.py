@@ -1,11 +1,10 @@
-from django.test import TestCase, Client
-from django.contrib.auth import get_user_model
-from django.utils import timezone
 from datetime import timedelta
-from unittest.mock import patch
-from app.models import Event, Category, Venue, User  
 
-User = get_user_model()
+from django.contrib.auth import get_user_model
+from django.test import Client, TestCase
+from django.utils import timezone
+
+from app.models import Category, Event, Venue
 
 
 class EventDetailCountdownTest(TestCase):
@@ -14,13 +13,13 @@ class EventDetailCountdownTest(TestCase):
         """Configuración inicial para los tests"""
         self.client = Client()
         
-        self.organizer = User.objects.create_user(
+        self.organizer = get_user_model().objects.create_user(
             username='organizer',
             email='organizer@test.com',
             password='testpass123'
         )
         
-        self.regular_user = User.objects.create_user(
+        self.regular_user = get_user_model().objects.create_user(
             username='regular_user',
             email='user@test.com',
             password='testpass123'

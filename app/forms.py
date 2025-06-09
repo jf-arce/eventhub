@@ -1,8 +1,10 @@
+from decimal import Decimal
+
 from django import forms
-from .models import Rating
 from django.core.exceptions import ValidationError
 
-from decimal import Decimal
+from .models import Rating
+
 
 def validate_rating(value):
     # Verificar que el valor esté en el rango correcto

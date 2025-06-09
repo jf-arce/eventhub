@@ -1,5 +1,7 @@
 from django.test import TestCase
-from app.models import Event, User, Rating, Category, Venue
+
+from app.models import Category, Event, Rating, User, Venue
+
 
 class AvgRatingTest(TestCase):
     def setUp(self):

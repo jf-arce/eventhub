@@ -1,7 +1,10 @@
-from django.utils import timezone
-from app.models import User, Event, Rating, Ticket, Category, Venue
-from app.test.test_e2e.base import BaseE2ETest
 import datetime
+
+from django.utils import timezone
+
+from app.models import Category, Event, Rating, Ticket, User, Venue
+from app.test.test_e2e.base import BaseE2ETest
+
 
 class AvgRatingE2ETest(BaseE2ETest):
     def setUp(self):

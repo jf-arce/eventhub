@@ -1,10 +1,11 @@
-from django.contrib.auth.models import AbstractUser
-from django.db import models
+from datetime import datetime, timedelta
+
 from django.conf import settings
-from django.core.validators import MinValueValidator, MaxValueValidator
-from datetime import datetime, timedelta, date
-from django.utils import timezone
+from django.contrib.auth.models import AbstractUser
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 from django.db.models import Avg
+from django.utils import timezone
 
 
 class User(AbstractUser):
@@ -87,7 +88,7 @@ class Category (models.Model):
            errors["description"] = "La descripción debe tener al menos 10 caracteres"
 
         if len(description) > 1000:
-            errors["description"] = f"La descripción no puede tener más de 1000 caracteres."
+            errors["description"] = "La descripción no puede tener más de 1000 caracteres."
 
         qs = cls.objects.filter(name__iexact=name)
         if exclude_id:
@@ -349,6 +350,10 @@ class RefoundRequest(models.Model):
     @classmethod
     def new(cls,ticket_code, reason, user, event):
         errors = RefoundRequest.validate(ticket_code, reason)
+
+        if errors:
+            return False, errors
+
         RefoundRequest.objects.create(
             ticket_code=ticket_code,
             reason=reason,
@@ -640,7 +645,7 @@ class Rating(models.Model):
         
         if date_filter:
             start_date = datetime.combine(date_filter, datetime.min.time())
-            end_date = datetime.combine(date_filter, datetime.max.time())
+            # end_date = datetime.combine(date_filter, datetime.max.time())
             
             queryset = queryset.filter(
                 scheduled_at__gte=start_date

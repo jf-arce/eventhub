@@ -1,8 +1,11 @@
 import datetime
+
 from django.test import TestCase
-from django.utils import timezone
-from app.models import Event, User, Notification, Ticket, Venue, Category
 from django.urls import reverse
+from django.utils import timezone
+
+from app.models import Category, Event, Notification, Ticket, User, Venue
+
 
 class BaseNotificationTest(TestCase):
     

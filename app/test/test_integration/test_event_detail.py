@@ -1,9 +1,11 @@
-from django.test import TestCase, Client
+from datetime import timedelta
+
+from django.contrib.auth import get_user_model
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
-from django.contrib.auth import get_user_model
-from datetime import timedelta
-from app.models import Event, Category, Venue
+
+from app.models import Category, Event, Venue
 
 User = get_user_model()
 
