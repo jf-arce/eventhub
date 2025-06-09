@@ -21,8 +21,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copia el resto del código fuente de la aplicación al contenedor
 COPY . .
 
+# Ejecutar migraciones (solo por usar sqlite como base de datos)
+RUN python manage.py migrate
+
 # Expone el puerto 8000 (por defecto para Django)
 EXPOSE 8000
 
-# Comando por defecto: inicia el servidor de desarrollo de Django
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Comando por defecto para iniciar la app con Gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "eventhub.wsgi:application"]
