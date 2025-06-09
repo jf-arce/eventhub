@@ -1,0 +1,110 @@
+name: Integracion Continua
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+      name: lint
+      runs-on: ubuntu-latest
+
+      steps:
+        - name: Check out code
+          uses: actions/checkout@v4
+
+        - name: Set up python
+          uses: actions/setup-python@v5
+          with:
+              python-version: '3.10'
+              cache: 'pip'
+        - run: pip install -r requirements.txt
+
+        - name: Run static test
+          run: ruff check
+
+  build:
+    name: Build Django app
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python  
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - run: pip install -r requirements.txt
+
+      - name: Create .env file
+        run: |
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+          echo "DEBUG=true" >> .env
+          echo "ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}" >> .env
+
+      - name: Run migrations checkout
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Build Docker image
+        run: docker build -t eventhub .
+
+      - name: Run Django checks in container
+        run: docker run --env-file .env eventhub python manage.py check
+
+  unit_and_integration_test:
+    name: Test de unidad e Integracion
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - run: pip install -r requirements.txt
+
+      - name: Create .env file
+        run: |
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+          echo "DEBUG=true" >> .env
+          echo "ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}" >> .env
+
+      - name: Run Test unit and integration
+        run: python manage.py test app/test/test_unit app/test/test_integration
+
+  e2e_test:
+    name: End-to-End Test
+    runs-on: ubuntu-latest
+    needs: unit_and_integration_test
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - run: pip install -r requirements.txt
+
+      - name: Create .env file
+        run: |
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+          echo "DEBUG=true" >> .env
+          echo "ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}" >> .env
+
+      - name: Install Playwright
+        run: python -m playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: python manage.py test app/test/test_e2e
