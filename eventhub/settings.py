@@ -30,9 +30,8 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure--f67ll=2-b2qolla9=1f8mtg@s
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["localhost,127.0.0.1,eventhub-643h.onrender.com"]
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,eventhub-643h.onrender.com").split(",")
 
-# CSRF_TRUSTED_ORIGINS = ["https://eventhub-643h.onrender.com"]
 
 # Application definition
 
@@ -50,7 +49,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    # "django.middleware.csrf.CsrfViewMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -155,3 +154,9 @@ LOGIN_REDIRECT_URL = "/events/"
 LOGIN_URL = "/accounts/login/"
 
 LOGOUT_REDIRECT_URL = "/accounts/login/"
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://localhost",
+    "https://127.0.0.1",
+    "https://eventhub-643h.onrender.com"
+]
