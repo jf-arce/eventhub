@@ -10,6 +10,8 @@ from django.db.models.deletion import ProtectedError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
 from .forms import RatingForm
 from .models import (
@@ -25,6 +27,7 @@ from .models import (
 )
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 def register(request):
     if request.method == "POST":
         email = request.POST.get("email")
