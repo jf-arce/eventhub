@@ -32,8 +32,6 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,eventhub-643h.onrender.com").split(",")
 
-CSRF_TRUSTED_ORIGINS = ["https://eventhub-643h.onrender.com",]
-
 # Application definition
 
 INSTALLED_APPS = [

@@ -3,12 +3,12 @@ name: Continuous Delivery
 on:
   push:
     branches:
-      - main
+      - test-deploy
   release:
     types: [published]
   workflow_run:
     workflows: ["CI"]
-    branches: [main]
+    branches: [test-deploy]
     types:
       - completed
 

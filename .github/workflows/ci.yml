@@ -2,7 +2,7 @@ name: Integracion Continua
 
 on:
   pull_request:
-    branches: [main]
+    branches: [test-deploy]
 
 jobs:
   lint:
