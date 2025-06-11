@@ -56,4 +56,4 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Deploy to Render
-        run: curl ${{ secrets.RENDER_HOOK }}
+        run: curl -X POST ${{ secrets.RENDER_HOOK }}
