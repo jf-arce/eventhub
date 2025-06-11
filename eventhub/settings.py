@@ -32,7 +32,7 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = ["localhost,127.0.0.1,eventhub-643h.onrender.com"]
 
-CSRF_TRUSTED_ORIGINS = ["https://eventhub-643h.onrender.com"]
+# CSRF_TRUSTED_ORIGINS = ["https://eventhub-643h.onrender.com"]
 
 # Application definition
 
@@ -50,7 +50,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
+    # "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
