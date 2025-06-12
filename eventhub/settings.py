@@ -30,19 +30,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure--f67ll=2-b2qolla9=1f8mtg@s
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,eventhub-643h.onrender.com").split(",")
-
-CSRF_TRUSTED_ORIGINS = [
-    "https://localhost",
-    "https://127.0.0.1",
-    "https://eventhub-643h.onrender.com"
-]
-
-USE_X_FORWARDED_HOST = True
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-CSRF_COOKIE_SECURE    = True
-SESSION_COOKIE_SECURE = True
-USE_X_FORWARDED_HOST = True
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 
 # Application definition
